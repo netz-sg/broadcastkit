@@ -4,7 +4,6 @@ import Settings from './pages/Settings';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const { ipcRenderer } = window.require('electron');
-const appVersion = require('../../../package.json').version;
 
 interface UpdateStatus {
   status: 'idle' | 'checking' | 'available' | 'downloading' | 'progress' | 'ready' | 'error';
@@ -19,8 +18,14 @@ function App() {
   const [obsMessage, setObsMessage] = useState('Prüfe Verbindung...');
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: 'idle' });
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [appVersion, setAppVersion] = useState('...');
 
   useEffect(() => {
+    // Get app version from main process
+    ipcRenderer.invoke('get-app-version').then((version: string) => {
+      setAppVersion(version);
+    });
+
     // Listen for OBS status updates
     ipcRenderer.on('obs-status', (event: any, status: any) => {
       console.log('OBS Status Update:', status);

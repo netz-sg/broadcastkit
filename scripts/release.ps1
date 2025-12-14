@@ -1,18 +1,6 @@
-# BroadcastKit Release Script v3.0
-# Automatische Changelog-Generierung aus geaenderten Dateien
-# Usage: .\scripts\release.ps1 -Type minor
-
-param(
-    [Parameter(Mandatory=$false)]
-    [string]$Version,
-    
-    [Parameter(Mandatory=$false)]
-    [ValidateSet("major", "minor", "patch", "beta")]
-    [string]$Type = "patch",
-    
-    [Parameter(Mandatory=$false)]
-    [switch]$DryRun
-)
+# BroadcastKit Release Manager v5.0
+# Interaktives Menue fuer Git Push und Release
+# Usage: .\scripts\release.ps1
 
 $ErrorActionPreference = "Stop"
 
@@ -26,347 +14,342 @@ function Write-Success($message) {
     Write-Host $message
 }
 
-# Banner
-Write-Host ""
-Write-Host "  ____                      _               _   _  ___ _   " -ForegroundColor Magenta
-Write-Host " | __ ) _ __ ___   __ _  __| | ___ __ _ ___| |_| |/ (_) |_ " -ForegroundColor Magenta
-Write-Host " |  _ \| '__/ _ \ / _' |/ _' |/ __/ _' / __| __| ' /| | __|" -ForegroundColor Magenta
-Write-Host " | |_) | | | (_) | (_| | (_| | (_| (_| \__ \ |_| . \| | |_" -ForegroundColor Magenta
-Write-Host " |____/|_|  \___/ \__,_|\__,_|\___\__,_|___/\__|_|\_\_|\__|" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  Release Script v3.0 - Auto Changelog" -ForegroundColor DarkGray
-Write-Host ""
+function Write-Error($message) {
+    Write-Host "[!!] " -NoNewline -ForegroundColor Red
+    Write-Host $message -ForegroundColor Red
+}
 
-# Get current version
-$packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
-$currentVersion = $packageJson.version
-Write-Host "Current version: " -NoNewline
-Write-Host $currentVersion -ForegroundColor Yellow
+function Show-Banner {
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ____                      _               _   _  ___ _   " -ForegroundColor Magenta
+    Write-Host " | __ ) _ __ ___   __ _  __| | ___ __ _ ___| |_| |/ (_) |_ " -ForegroundColor Magenta
+    Write-Host " |  _ \| '__/ _ \ / _' |/ _' |/ __/ _' / __| __| ' /| | __|" -ForegroundColor Magenta
+    Write-Host " | |_) | | | (_) | (_| | (_| | (_| (_| \__ \ |_| . \| | |_" -ForegroundColor Magenta
+    Write-Host " |____/|_|  \___/ \__,_|\__,_|\___\__,_|___/\__|_|\_\_|\__|" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "  Release Manager v5.0" -ForegroundColor DarkGray
+    Write-Host ""
+}
 
-# Calculate new version
-if (-not $Version) {
+function Get-CurrentVersion {
+    $packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
+    return $packageJson.version
+}
+
+function Get-NewVersion($currentVersion, $type) {
     $versionParts = $currentVersion -replace "-beta.*", "" -split "\."
     $major = [int]$versionParts[0]
     $minor = [int]$versionParts[1]
     $patch = [int]$versionParts[2]
     
-    switch ($Type) {
+    switch ($type) {
         "major" { $major++; $minor = 0; $patch = 0 }
         "minor" { $minor++; $patch = 0 }
         "patch" { $patch++ }
-        "beta" { 
-            if ($currentVersion -match "beta\.(\d+)") {
-                $betaNum = [int]$Matches[1] + 1
-            } else {
-                $betaNum = 1
-            }
-            $Version = "$major.$minor.$patch-beta.$betaNum"
-        }
     }
-    if ($Type -ne "beta") { $Version = "$major.$minor.$patch" }
+    return "$major.$minor.$patch"
 }
 
-$isPrerelease = $Version -match "beta|alpha|rc"
-$tagName = "v$Version"
-
-Write-Host "New version: " -NoNewline
-Write-Host $Version -ForegroundColor Green
-Write-Host "Tag: " -NoNewline
-Write-Host $tagName -ForegroundColor Cyan
-
-if ($DryRun) {
-    Write-Host "`n[DRY RUN MODE]" -ForegroundColor Yellow
-}
-
-# Analyze changed files and generate changelog
-Write-Step "Analysiere Aenderungen..."
-
-$lastTag = git describe --tags --abbrev=0 2>$null
-$features = @()
-$fixes = @()
-$improvements = @()
-
-# Get changed files: committed since last tag + staged + unstaged
-$changedFiles = @()
-
-if ($lastTag) {
-    # Files changed in commits since last tag
-    $committedFiles = git diff --name-only "$lastTag..HEAD" 2>$null
-    if ($committedFiles) { $changedFiles += $committedFiles }
-}
-
-# Also include staged and unstaged changes (current work)
-$stagedFiles = git diff --cached --name-only 2>$null
-$unstagedFiles = git diff --name-only 2>$null
-if ($stagedFiles) { $changedFiles += $stagedFiles }
-if ($unstagedFiles) { $changedFiles += $unstagedFiles }
-
-# Remove duplicates
-$changedFiles = $changedFiles | Select-Object -Unique
-
-Write-Host "Gefundene geaenderte Dateien: $($changedFiles.Count)" -ForegroundColor DarkGray
-
-# Analyze each changed file and categorize
-foreach ($file in $changedFiles) {
-    if ([string]::IsNullOrWhiteSpace($file)) { continue }
+function Show-MainMenu {
+    $currentVersion = Get-CurrentVersion
     
-    # New overlay files = Feature
-    if ($file -match "overlays/scene-.*\.html$") {
-        $sceneName = [regex]::Match($file, "scene-(.+)\.html").Groups[1].Value
-        $sceneNames = @{
-            "starting" = "Starting Soon"
-            "brb" = "Be Right Back"
-            "ending" = "Stream Ending"
-            "technical" = "Technical Difficulties"
-        }
-        if ($sceneNames.ContainsKey($sceneName)) {
-            $entry = "**Stream Scene: $($sceneNames[$sceneName])** - Neues Fullscreen Overlay"
-            if ($features -notcontains "- $entry") { $features += "- $entry" }
-        }
-    }
-    elseif ($file -match "overlays/.*\.html$" -and $file -notmatch "scene-") {
-        # Check if it's a modification (responsive, fix, etc) by looking at diff
-        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
-        if ($diffContent -match "clamp\(|vw|vh|100vw|100vh") {
-            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
-            $entry = "**$overlayName Overlay** - Responsive Design fuer alle Aufloesungen"
-            if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
-        }
-        if ($diffContent -match "classList\.add\('visible'\)|\.visible") {
-            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
-            $entry = "**$overlayName** - Wird jetzt standardmaessig angezeigt"
-            if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
-        }
-        if ($diffContent -match "fetch\('/api/config'\)") {
-            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
-            $entry = "**$overlayName** - Laed Einstellungen automatisch"
-            if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
-        }
-    }
+    Write-Host "  Aktuelle Version: " -NoNewline
+    Write-Host "v$currentVersion" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Was moechtest du tun?" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  [1] " -NoNewline -ForegroundColor Cyan
+    Write-Host "Nur Push (Commit + Push ohne Release)"
+    Write-Host "  [2] " -NoNewline -ForegroundColor Green
+    Write-Host "Release erstellen (Build + Installer + GitHub Release)"
+    Write-Host ""
+    Write-Host "  [Q] " -NoNewline -ForegroundColor Red
+    Write-Host "Beenden"
+    Write-Host ""
     
-    # New component files = Feature
-    elseif ($file -match "components/.*Control\.tsx$") {
-        $componentName = [regex]::Match($file, "components/(.+)Control\.tsx").Groups[1].Value
-        # Check if new file
-        $existsInLastTag = git show "${lastTag}:$file" 2>$null
-        if (-not $existsInLastTag) {
-            $entry = "**$componentName** - Neues Control Panel im Dashboard"
-            if ($features -notcontains "- $entry") { $features += "- $entry" }
-        }
+    $choice = Read-Host "  Auswahl"
+    return $choice
+}
+
+function Show-ReleaseTypeMenu {
+    $currentVersion = Get-CurrentVersion
+    
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host "  RELEASE TYP WAEHLEN" -ForegroundColor Cyan
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Aktuelle Version: v$currentVersion" -ForegroundColor Yellow
+    Write-Host ""
+    
+    $patchVersion = Get-NewVersion $currentVersion "patch"
+    $minorVersion = Get-NewVersion $currentVersion "minor"
+    $majorVersion = Get-NewVersion $currentVersion "major"
+    
+    Write-Host "  [1] " -NoNewline -ForegroundColor Green
+    Write-Host "PATCH  " -NoNewline -ForegroundColor Green
+    Write-Host "v$patchVersion" -NoNewline -ForegroundColor White
+    Write-Host "  - Bug Fixes, kleine Aenderungen" -ForegroundColor DarkGray
+    
+    Write-Host "  [2] " -NoNewline -ForegroundColor Yellow
+    Write-Host "MINOR  " -NoNewline -ForegroundColor Yellow
+    Write-Host "v$minorVersion" -NoNewline -ForegroundColor White
+    Write-Host "  - Neue Features, Verbesserungen" -ForegroundColor DarkGray
+    
+    Write-Host "  [3] " -NoNewline -ForegroundColor Red
+    Write-Host "MAJOR  " -NoNewline -ForegroundColor Red
+    Write-Host "v$majorVersion" -NoNewline -ForegroundColor White
+    Write-Host "  - Breaking Changes, grosse Updates" -ForegroundColor DarkGray
+    
+    Write-Host ""
+    Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray
+    Write-Host "Zurueck"
+    Write-Host ""
+    
+    $choice = Read-Host "  Auswahl"
+    
+    switch ($choice) {
+        "1" { return "patch" }
+        "2" { return "minor" }
+        "3" { return "major" }
+        "0" { return $null }
+        default { return $null }
+    }
+}
+
+function Do-Push {
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host "  GIT PUSH" -ForegroundColor Cyan
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    # Show status
+    Write-Step "Git Status..."
+    $status = git status --short
+    if ($status) {
+        Write-Host $status -ForegroundColor Gray
+    } else {
+        Write-Host "  Keine Aenderungen." -ForegroundColor DarkGray
     }
     
-    # Store changes = might be fix or improvement
-    elseif ($file -match "store\.ts$") {
-        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
-        if ($diffContent -match "isRunning:\s*true") {
-            $entry = "Social Widget startet jetzt automatisch"
-            if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
-        }
-        if ($diffContent -match "interface.*Scene|streamScenes") {
-            $entry = "**Stream Scenes Config** - Neue Konfigurationsoptionen"
-            if ($features -notcontains "- $entry") { $features += "- $entry" }
-        }
+    Write-Host ""
+    $commitMsg = Read-Host "  Commit Message (leer = abbrechen)"
+    
+    if ([string]::IsNullOrWhiteSpace($commitMsg)) {
+        Write-Error "Abgebrochen."
+        return
     }
     
-    # Config files
-    elseif ($file -match "postcss\.config") {
-        $entry = "PostCSS Konfiguration hinzugefuegt/repariert"
-        if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
-    }
-    
-    # Release script
-    elseif ($file -match "release\.ps1$") {
-        $entry = "Release Script mit automatischer Changelog-Generierung"
-        if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
-    }
-    
-    # Server changes
-    elseif ($file -match "server\.ts$") {
-        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
-        if ($diffContent -match "scene-") {
-            $entry = "Server-Routes fuer Stream Scenes"
-            if ($features -notcontains "- $entry") { $features += "- $entry" }
-        }
-    }
-}
-
-# Show detected changes
-Write-Host ""
-if ($features.Count -gt 0) {
-    Write-Host "Erkannte Features: $($features.Count)" -ForegroundColor Green
-}
-if ($fixes.Count -gt 0) {
-    Write-Host "Erkannte Fixes: $($fixes.Count)" -ForegroundColor Red
-}
-if ($improvements.Count -gt 0) {
-    Write-Host "Erkannte Verbesserungen: $($improvements.Count)" -ForegroundColor Yellow
-}
-
-# Confirm
-Write-Host ""
-$confirm = Read-Host "Continue with release? (y/N)"
-if ($confirm -ne "y" -and $confirm -ne "Y") {
-    Write-Host "Aborted." -ForegroundColor Red
-    exit 1
-}
-
-# Step 1: Update package.json
-Write-Step "Updating package.json..."
-if (-not $DryRun) {
-    $packageContent = Get-Content "package.json" -Raw
-    $packageContent = $packageContent -replace '"version":\s*"[^"]*"', "`"version`": `"$Version`""
-    [System.IO.File]::WriteAllText("$PWD\package.json", $packageContent, [System.Text.UTF8Encoding]::new($false))
-    Write-Success "package.json updated to $Version"
-}
-
-# Step 2: Update license.txt
-Write-Step "Updating license.txt..."
-if (-not $DryRun) {
-    $licenseContent = Get-Content "build/license.txt" -Raw
-    $licenseContent = $licenseContent -replace "BETA v[\d\.]+-?beta\.?\d*", "BETA v$Version"
-    $licenseContent | Set-Content "build/license.txt" -Encoding ASCII -NoNewline
-    Write-Success "license.txt updated"
-}
-
-# Step 3: Build
-Write-Step "Building project..."
-if (-not $DryRun) {
-    npm run build
-    if ($LASTEXITCODE -ne 0) { throw "Build failed" }
-    Write-Success "Build completed"
-}
-
-# Step 4: Create installer
-Write-Step "Creating installer..."
-if (-not $DryRun) {
-    npm run dist:installer
-    if ($LASTEXITCODE -ne 0) { throw "Installer creation failed" }
-    Write-Success "Installer created"
-}
-
-# Step 5: Find installer
-$installerPath = Get-ChildItem "installer" -Filter "*.exe" | Where-Object { $_.Name -match "Setup" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $installerPath) { throw "Installer not found!" }
-Write-Success "Found: $($installerPath.Name)"
-
-# Step 6: Git commit
-Write-Step "Committing changes..."
-if (-not $DryRun) {
+    Write-Step "Staging all changes..."
     git add -A
-    git commit -m "chore: release v$Version"
-    Write-Success "Changes committed"
+    
+    Write-Step "Committing..."
+    git commit -m $commitMsg
+    
+    Write-Step "Pushing to GitHub..."
+    git push origin main
+    
+    Write-Success "Push erfolgreich!"
+    Write-Host ""
+    Read-Host "  Druecke ENTER um fortzufahren"
 }
 
-# Step 7: Create tag
-Write-Step "Creating git tag..."
-if (-not $DryRun) {
+function Do-Release($type) {
+    $currentVersion = Get-CurrentVersion
+    $newVersion = Get-NewVersion $currentVersion $type
+    $tagName = "v$newVersion"
+    
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host "  RELEASE $tagName" -ForegroundColor Green
+    Write-Host "  ========================================" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    # Release Notes eingeben
+    Write-Host "  RELEASE NOTES EINGEBEN" -ForegroundColor Cyan
+    Write-Host "  (Leere Zeile = Kategorie beenden)" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    # Features
+    Write-Host "  NEUE FEATURES:" -ForegroundColor Green
+    $features = @()
+    while ($true) {
+        $input = Read-Host "    +"
+        if ([string]::IsNullOrWhiteSpace($input)) { break }
+        $features += "- $input"
+    }
+    
+    # Fixes
+    Write-Host ""
+    Write-Host "  BUG FIXES:" -ForegroundColor Red
+    $fixes = @()
+    while ($true) {
+        $input = Read-Host "    +"
+        if ([string]::IsNullOrWhiteSpace($input)) { break }
+        $fixes += "- $input"
+    }
+    
+    # Improvements
+    Write-Host ""
+    Write-Host "  VERBESSERUNGEN:" -ForegroundColor Yellow
+    $improvements = @()
+    while ($true) {
+        $input = Read-Host "    +"
+        if ([string]::IsNullOrWhiteSpace($input)) { break }
+        $improvements += "- $input"
+    }
+    
+    # Zusammenfassung
+    Write-Host ""
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  ZUSAMMENFASSUNG: $tagName" -ForegroundColor Cyan
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+    if ($features.Count -gt 0) {
+        Write-Host "  Features: $($features.Count)" -ForegroundColor Green
+    }
+    if ($fixes.Count -gt 0) {
+        Write-Host "  Fixes: $($fixes.Count)" -ForegroundColor Red
+    }
+    if ($improvements.Count -gt 0) {
+        Write-Host "  Verbesserungen: $($improvements.Count)" -ForegroundColor Yellow
+    }
+    Write-Host ""
+    
+    $confirm = Read-Host "  Release starten? (y/N)"
+    if ($confirm -ne "y") {
+        Write-Error "Abgebrochen."
+        return
+    }
+    
+    Write-Host ""
+    
+    # Update package.json
+    Write-Step "Updating package.json auf $newVersion..."
+    $packageContent = Get-Content "package.json" -Raw
+    $packageContent = $packageContent -replace '"version":\s*"[^"]+"', "`"version`": `"$newVersion`""
+    $packageContent | Set-Content "package.json" -NoNewline
+    Write-Success "package.json aktualisiert"
+    
+    # Build
+    Write-Step "Building..."
+    npm run build
+    if ($LASTEXITCODE -ne 0) { throw "Build fehlgeschlagen!" }
+    Write-Success "Build erfolgreich"
+    
+    # Installer
+    Write-Step "Erstelle Installer..."
+    npm run dist:installer
+    if ($LASTEXITCODE -ne 0) { throw "Installer-Erstellung fehlgeschlagen!" }
+    Write-Success "Installer erstellt"
+    
+    # Check installer
+    $installerName = "BroadcastKit Setup $newVersion.exe"
+    $installerPath = "installer\$installerName"
+    if (-not (Test-Path $installerPath)) {
+        throw "Installer nicht gefunden: $installerPath"
+    }
+    
+    # Git
+    Write-Step "Git Commit..."
+    git add -A
+    git commit -m "chore: release $tagName"
+    Write-Success "Commit erstellt"
+    
+    Write-Step "Git Tag..."
     git tag -a $tagName -m "BroadcastKit $tagName"
-    Write-Success "Tag $tagName created"
-}
-
-# Step 8: Push
-Write-Step "Pushing to GitHub..."
-if (-not $DryRun) {
+    Write-Success "Tag $tagName erstellt"
+    
+    Write-Step "Push to GitHub..."
     git push origin main
     git push origin $tagName
-    Write-Success "Pushed to GitHub"
-}
-
-# Step 9: Build release notes
-Write-Step "Building release notes..."
-
-$notesBuilder = @()
-$notesBuilder += "# BroadcastKit $tagName"
-$notesBuilder += ""
-$notesBuilder += "Professionelle Stream Overlays fuer OBS Studio"
-$notesBuilder += ""
-
-if ($features.Count -gt 0) {
-    $notesBuilder += "## :sparkles: Neue Features"
-    $notesBuilder += ""
-    $notesBuilder += $features
-    $notesBuilder += ""
-}
-
-if ($fixes.Count -gt 0) {
-    $notesBuilder += "## :bug: Bugfixes"
-    $notesBuilder += ""
-    $notesBuilder += $fixes
-    $notesBuilder += ""
-}
-
-if ($improvements.Count -gt 0) {
-    $notesBuilder += "## :wrench: Verbesserungen"
-    $notesBuilder += ""
-    $notesBuilder += $improvements
-    $notesBuilder += ""
-}
-
-# Always include feature overview
-$notesBuilder += "## :package: Alle Features"
-$notesBuilder += ""
-$notesBuilder += "- **Lower Third Overlay** - 3 Styles: Clean Pro, Broadcast News, Esports HUD"
-$notesBuilder += "- **Now Playing Widget** - Automatische Spielerkennung via RAWG API"
-$notesBuilder += "- **Social Media Widget** - Rotierende Social Links"
-$notesBuilder += "- **Stream Scenes** - Starting Soon, BRB, Ending, Technical Difficulties"
-$notesBuilder += "- **OBS Integration** - Auto-Connect und Echtzeit-Steuerung"
-$notesBuilder += ""
-
-# Installation
-$notesBuilder += "## :cd: Installation"
-$notesBuilder += ""
-$notesBuilder += "1. ``BroadcastKit Setup $Version.exe`` herunterladen"
-$notesBuilder += "2. Installer ausfuehren"
-$notesBuilder += "3. Browser Sources in OBS hinzufuegen"
-$notesBuilder += ""
-$notesBuilder += "| Overlay | URL |"
-$notesBuilder += "|---------|-----|"
-$notesBuilder += "| Lower Third | ``http://localhost:3000/overlay/lower-third`` |"
-$notesBuilder += "| Now Playing | ``http://localhost:3000/overlay/now-playing`` |"
-$notesBuilder += "| Social Widget | ``http://localhost:3000/overlay/social-widget`` |"
-$notesBuilder += "| Starting Soon | ``http://localhost:3000/overlay/scene-starting`` |"
-$notesBuilder += "| Be Right Back | ``http://localhost:3000/overlay/scene-brb`` |"
-$notesBuilder += "| Stream Ending | ``http://localhost:3000/overlay/scene-ending`` |"
-$notesBuilder += "| Tech. Difficulties | ``http://localhost:3000/overlay/scene-technical`` |"
-$notesBuilder += ""
-
-$notesBuilder += "## :computer: Systemanforderungen"
-$notesBuilder += ""
-$notesBuilder += "- Windows 10/11 64-bit"
-$notesBuilder += "- OBS Studio mit WebSocket Plugin (v5.x)"
-
-$ReleaseNotes = $notesBuilder -join "`n"
-
-# Preview in dry run
-if ($DryRun) {
-    Write-Host "`n--- RELEASE NOTES PREVIEW ---" -ForegroundColor Yellow
-    Write-Host $ReleaseNotes
-    Write-Host "--- END PREVIEW ---`n" -ForegroundColor Yellow
-}
-
-# Step 10: Create GitHub release
-Write-Step "Creating GitHub release..."
-
-if (-not $DryRun) {
-    $releaseNotesFile = "release-notes-temp.md"
-    $ReleaseNotes | Out-File -FilePath $releaseNotesFile -Encoding UTF8
+    Write-Success "Gepusht"
     
-    $prereleaseArg = ""
-    if ($isPrerelease) { $prereleaseArg = "--prerelease" }
+    # Release Notes bauen
+    $releaseNotes = "# BroadcastKit $tagName`n`nProfessionelle Stream Overlays fuer OBS Studio`n"
     
-    gh release create $tagName --title "BroadcastKit $tagName" --notes-file "$releaseNotesFile" $prereleaseArg "$($installerPath.FullName)"
+    if ($features.Count -gt 0) {
+        $releaseNotes += "`n## :sparkles: Neue Features`n`n"
+        $releaseNotes += ($features -join "`n") + "`n"
+    }
+    if ($fixes.Count -gt 0) {
+        $releaseNotes += "`n## :bug: Bug Fixes`n`n"
+        $releaseNotes += ($fixes -join "`n") + "`n"
+    }
+    if ($improvements.Count -gt 0) {
+        $releaseNotes += "`n## :wrench: Verbesserungen`n`n"
+        $releaseNotes += ($improvements -join "`n") + "`n"
+    }
     
-    Remove-Item $releaseNotesFile -ErrorAction SilentlyContinue
+    $releaseNotes += @"
+
+## :cd: Installation
+
+1. ``BroadcastKit Setup $newVersion.exe`` herunterladen
+2. Installer ausfuehren
+3. Browser Sources in OBS hinzufuegen
+
+| Overlay | URL |
+|---------|-----|
+| Lower Third | ``http://localhost:3000/overlay/lower-third`` |
+| Now Playing | ``http://localhost:3000/overlay/now-playing`` |
+| Social Widget | ``http://localhost:3000/overlay/social-widget`` |
+| Stream Scenes | ``http://localhost:3000/overlay/scene-*`` |
+
+## :computer: Systemanforderungen
+
+- Windows 10/11 64-bit
+- OBS Studio mit WebSocket Plugin (v5.x)
+"@
     
-    if ($LASTEXITCODE -ne 0) { throw "GitHub release creation failed" }
-    Write-Success "GitHub release created"
+    # GitHub Release
+    Write-Step "Erstelle GitHub Release..."
+    $notesFile = "installer\release-notes.md"
+    $releaseNotes | Out-File -FilePath $notesFile -Encoding utf8
+    
+    gh release create $tagName "$installerPath" --title "BroadcastKit $tagName" --notes-file "$notesFile"
+    Remove-Item $notesFile -ErrorAction SilentlyContinue
+    Write-Success "GitHub Release erstellt"
+    
+    # Done
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor Green
+    Write-Host "  RELEASE $tagName ERFOLGREICH!" -ForegroundColor Green
+    Write-Host "  ========================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  https://github.com/netz-sg/broadcastkit/releases/tag/$tagName" -ForegroundColor Cyan
+    Write-Host ""
+    Read-Host "  Druecke ENTER um fortzufahren"
 }
 
-# Done!
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "  Release $tagName completed!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "Release URL: " -NoNewline
-Write-Host "https://github.com/netz-sg/broadcastkit/releases/tag/$tagName" -ForegroundColor Cyan
+# Main Loop
+while ($true) {
+    Show-Banner
+    $choice = Show-MainMenu
+    
+    switch ($choice) {
+        "1" { Do-Push }
+        "2" {
+            Show-Banner
+            $releaseType = Show-ReleaseTypeMenu
+            if ($releaseType) {
+                Do-Release $releaseType
+            }
+        }
+        "q" { 
+            Write-Host ""
+            Write-Host "  Auf Wiedersehen!" -ForegroundColor Magenta
+            Write-Host ""
+            exit 0 
+        }
+        "Q" { 
+            Write-Host ""
+            Write-Host "  Auf Wiedersehen!" -ForegroundColor Magenta
+            Write-Host ""
+            exit 0 
+        }
+    }
+}

@@ -1,6 +1,6 @@
 {
     "name": "broadcastkit",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "BroadcastKit - Professionelle Stream Overlays fÃƒÆ’Ã‚Â¼r OBS mit automatischer Spielerkennung",
     "main": "dist/main/index.js",
     "scripts": {
@@ -14,7 +14,8 @@
         "clean": "rimraf dist release",
         "dist": "npm run build && electron-builder --win",
         "dist:installer": "npm run build && electron-builder --win nsis",
-        "dist:portable": "npm run build && electron-builder --win portable"
+        "dist:portable": "npm run build && electron-builder --win portable",
+        "release": "powershell -ExecutionPolicy Bypass -File scripts/release.ps1"
     },
     "build": {
         "appId": "com.broadcastkit.app",

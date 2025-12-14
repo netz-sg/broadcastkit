@@ -19,6 +19,7 @@ function createWindow(): void {
     minWidth: 480,
     minHeight: 600,
     backgroundColor: '#0a0a0f',
+    show: false, // Don't show until ready
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -30,6 +31,20 @@ function createWindow(): void {
     icon: process.env.NODE_ENV === 'development' 
       ? path.join(__dirname, '../../assets/icon.png')
       : path.join(process.resourcesPath, 'assets/icon.png'),
+  });
+
+  // Show window when ready to prevent white/gray flash
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+  });
+
+  // Handle load failures
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('[Main] Failed to load:', errorCode, errorDescription);
+    // Try to reload once
+    setTimeout(() => {
+      mainWindow?.loadFile(path.join(__dirname, '../renderer/index.html'));
+    }, 1000);
   });
 
   // Load the React app
@@ -67,6 +82,10 @@ async function initializeApp(): Promise<void> {
 // IPC Handlers
 ipcMain.handle('get-config', async () => {
   return configStore.getAll();
+});
+
+ipcMain.handle('get-app-version', async () => {
+  return app.getVersion();
 });
 
 ipcMain.handle('update-obs-config', async (event, config) => {
