@@ -47,10 +47,36 @@ interface SocialWidgetConfig {
   isRunning: boolean;           // Widget läuft gerade
 }
 
+// Stream Scenes (Fullscreen Overlays)
+interface StreamScene {
+  id: string;
+  name: string;
+  title: string;
+  subtitle: string;
+  showCountdown: boolean;
+  countdownMinutes: number;
+  style: 'minimal' | 'gaming' | 'elegant';
+  backgroundType: 'gradient' | 'animated' | 'solid';
+  backgroundColor: string;
+  accentColor: string;
+  showSocials: boolean;
+}
+
+interface StreamScenesConfig {
+  scenes: {
+    starting: StreamScene;
+    brb: StreamScene;
+    ending: StreamScene;
+    technical: StreamScene;
+  };
+  globalStyle: 'minimal' | 'gaming' | 'elegant';
+}
+
 interface OverlayConfig {
   lowerThird: LowerThirdConfig;
   nowPlaying: NowPlayingConfig;
   socialWidget: SocialWidgetConfig;
+  streamScenes: StreamScenesConfig;
 }
 
 interface AppConfig {
@@ -103,6 +129,63 @@ const defaultConfig: AppConfig = {
       style: 'clean',
       displayDuration: 5,
       isRunning: false,
+    },
+    streamScenes: {
+      scenes: {
+        starting: {
+          id: 'starting',
+          name: 'Starting Soon',
+          title: 'Stream startet gleich',
+          subtitle: 'Mach es dir bequem!',
+          showCountdown: true,
+          countdownMinutes: 5,
+          style: 'gaming',
+          backgroundType: 'animated',
+          backgroundColor: '#0a0a0f',
+          accentColor: '#6366f1',
+          showSocials: true,
+        },
+        brb: {
+          id: 'brb',
+          name: 'Be Right Back',
+          title: 'Gleich zurück',
+          subtitle: 'Kurze Pause...',
+          showCountdown: true,
+          countdownMinutes: 5,
+          style: 'gaming',
+          backgroundType: 'animated',
+          backgroundColor: '#0a0a0f',
+          accentColor: '#f59e0b',
+          showSocials: true,
+        },
+        ending: {
+          id: 'ending',
+          name: 'Stream Ending',
+          title: 'Danke fürs Zuschauen!',
+          subtitle: 'Bis zum nächsten Mal',
+          showCountdown: false,
+          countdownMinutes: 0,
+          style: 'gaming',
+          backgroundType: 'animated',
+          backgroundColor: '#0a0a0f',
+          accentColor: '#ec4899',
+          showSocials: true,
+        },
+        technical: {
+          id: 'technical',
+          name: 'Technical Difficulties',
+          title: 'Technische Probleme',
+          subtitle: 'Wir sind gleich zurück!',
+          showCountdown: false,
+          countdownMinutes: 0,
+          style: 'gaming',
+          backgroundType: 'animated',
+          backgroundColor: '#0a0a0f',
+          accentColor: '#ef4444',
+          showSocials: false,
+        },
+      },
+      globalStyle: 'gaming',
     },
   },
 };
@@ -175,6 +258,18 @@ class ConfigStore {
     this.store.set('overlays.socialWidget', { ...current, ...config });
   }
 
+  setStreamScenesConfig(config: Partial<StreamScenesConfig>): void {
+    const current = this.getOverlayConfig().streamScenes || {};
+    this.store.set('overlays.streamScenes', { ...current, ...config });
+  }
+
+  setStreamScene(sceneId: 'starting' | 'brb' | 'ending' | 'technical', scene: Partial<StreamScene>): void {
+    const overlayConfig = this.getOverlayConfig();
+    const streamScenes = overlayConfig.streamScenes || { scenes: {} };
+    const currentScene = streamScenes.scenes?.[sceneId] || {};
+    this.store.set(`overlays.streamScenes.scenes.${sceneId}`, { ...currentScene, ...scene });
+  }
+
   // Full Config
   getAll(): AppConfig {
     return this.store.store;
@@ -182,4 +277,4 @@ class ConfigStore {
 }
 
 export const configStore = new ConfigStore();
-export type { ObsConfig, OverlayConfig, AppConfig, LowerThirdConfig, NowPlayingConfig, RawgConfig, SocialWidgetConfig, SocialLink };
+export type { ObsConfig, OverlayConfig, AppConfig, LowerThirdConfig, NowPlayingConfig, RawgConfig, SocialWidgetConfig, SocialLink, StreamScenesConfig, StreamScene };

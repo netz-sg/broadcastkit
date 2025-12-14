@@ -5,6 +5,7 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  fullWidth?: boolean;
 }
 
 interface SocialLink {
@@ -26,7 +27,7 @@ const platformConfig = {
   twitch: { icon: 'twitch', color: 'text-purple-400', bgColor: 'bg-purple-600', label: 'Twitch' },
 };
 
-function SocialWidgetControl({ config }: Props) {
+function SocialWidgetControl({ config, fullWidth = false }: Props) {
   const socialConfig = config.overlays.socialWidget || {};
   
   const [links, setLinks] = useState<SocialLink[]>(socialConfig.links || [

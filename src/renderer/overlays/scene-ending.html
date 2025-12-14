@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream Ending - Stream Scene</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --accent: #ec4899;
+      --bg: #0a0a0f;
+    }
+    
+    body {
+      width: 100vw;
+      height: 100vh;
+      min-height: 100%;
+      background: var(--bg);
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Animated Background */
+    .bg-animated {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    
+    .bg-glow {
+      position: absolute;
+      width: clamp(500px, 55vw, 1200px);
+      height: clamp(500px, 55vw, 1200px);
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.1;
+      filter: blur(120px);
+      animation: glowPulse 6s ease-in-out infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.1; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    /* Hearts Animation */
+    .hearts {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    
+    .heart {
+      position: absolute;
+      font-size: clamp(20px, 2.5vw, 40px);
+      opacity: 0;
+      animation: floatHeart 8s ease-in-out infinite;
+    }
+    
+    @keyframes floatHeart {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; transform: translateY(80vh) scale(1); }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-20vh) scale(0.5); opacity: 0; }
+    }
+
+    /* Content Container */
+    .content {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      z-index: 10;
+      text-align: center;
+      opacity: 0;
+      transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 90%;
+      max-width: 80vw;
+      padding: 0 5vw;
+    }
+    
+    .content.visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Heart Icon */
+    .heart-icon {
+      width: clamp(100px, 10vw, 180px);
+      height: clamp(100px, 10vw, 180px);
+      margin: 0 auto clamp(20px, 3vw, 50px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: heartBeat 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      15% { transform: scale(1.15); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.1); }
+      60% { transform: scale(1); }
+    }
+    
+    .heart-icon svg {
+      width: clamp(80px, 8vw, 150px);
+      height: clamp(80px, 8vw, 150px);
+      fill: var(--accent);
+      filter: drop-shadow(0 0 30px var(--accent));
+    }
+
+    /* Title */
+    .title {
+      font-size: clamp(40px, 5.5vw, 100px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: clamp(10px, 1.5vw, 25px);
+      text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      letter-spacing: -0.02em;
+    }
+
+    /* Subtitle */
+    .subtitle {
+      font-size: clamp(18px, 2.2vw, 40px);
+      color: rgba(255,255,255,0.6);
+      margin-bottom: clamp(30px, 4vw, 80px);
+      font-weight: 500;
+    }
+
+    /* Divider */
+    .divider {
+      width: clamp(100px, 15vw, 250px);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      margin: 0 auto clamp(30px, 4vw, 80px);
+    }
+
+    /* Social Icons */
+    .socials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(15px, 2vw, 40px);
+    }
+    
+    .social-btn {
+      width: clamp(40px, 4vw, 80px);
+      height: clamp(40px, 4vw, 80px);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: clamp(10px, 1.2vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .social-btn:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-5px);
+    }
+    
+    .social-btn svg {
+      width: clamp(18px, 2vw, 36px);
+      height: clamp(18px, 2vw, 36px);
+      color: white;
+      opacity: 0.7;
+    }
+
+    /* Thanks message animation */
+    .thanks-wave {
+      display: inline-block;
+      animation: wave 2s ease-in-out infinite;
+      transform-origin: 70% 70%;
+    }
+    
+    @keyframes wave {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(20deg); }
+      75% { transform: rotate(-10deg); }
+    }
+
+    /* Hide state */
+    .content.hidden {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+  </div>
+  
+  <!-- Floating Hearts -->
+  <div class="hearts" id="hearts"></div>
+
+  <!-- Content -->
+  <div id="content" class="content visible">
+    <div class="heart-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    </div>
+    
+    <h1 id="title" class="title">Danke fürs Zuschauen! <span class="thanks-wave">👋</span></h1>
+    <p id="subtitle" class="subtitle">Bis zum nächsten Mal</p>
+    
+    <div class="divider"></div>
+    
+    <div id="socials" class="socials">
+      <!-- Filled dynamically if showSocials is true -->
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Create floating hearts
+    const heartsContainer = document.getElementById('hearts');
+    const heartEmojis = ['💜', '💗', '💖', '❤️', '🧡', '💛'];
+    
+    for(let i = 0; i < 15; i++) {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+      heart.style.left = Math.random() * 100 + '%';
+      heart.style.animationDelay = Math.random() * 8 + 's';
+      heart.style.animationDuration = (6 + Math.random() * 4) + 's';
+      heartsContainer.appendChild(heart);
+    }
+    
+    const socket = io();
+    const content = document.getElementById('content');
+    const titleEl = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    
+    function setAccentColor(color) {
+      document.documentElement.style.setProperty('--accent', color);
+    }
+    
+    socket.on('overlay-event', (data) => {
+      if (data.module === 'SCENE_ENDING') {
+        const payload = data.payload;
+        
+        if (payload.action === 'SHOW') {
+          titleEl.innerHTML = (payload.title || 'Danke fürs Zuschauen!') + ' <span class="thanks-wave">👋</span>';
+          subtitleEl.textContent = payload.subtitle || '';
+          setAccentColor(payload.accentColor || '#ec4899');
+          
+          content.classList.remove('hidden');
+          content.classList.add('visible');
+        }
+        
+        if (payload.action === 'HIDE') {
+          content.classList.remove('visible');
+          content.classList.add('hidden');
+        }
+      }
+    });
+    
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(config => {
+        const scene = config.overlays?.streamScenes?.scenes?.ending;
+        if (scene) {
+          titleEl.innerHTML = scene.title + ' <span class="thanks-wave">👋</span>';
+          subtitleEl.textContent = scene.subtitle;
+          setAccentColor(scene.accentColor);
+        }
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Difficulties - Stream Scene</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --accent: #ef4444;
+      --bg: #0a0a0f;
+    }
+    
+    body {
+      width: 100vw;
+      height: 100vh;
+      min-height: 100%;
+      background: var(--bg);
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Animated Background with glitch effect */
+    .bg-animated {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    
+    .bg-glow {
+      position: absolute;
+      width: clamp(400px, 45vw, 1000px);
+      height: clamp(400px, 45vw, 1000px);
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.1;
+      filter: blur(100px);
+      animation: alertPulse 2s ease-in-out infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    @keyframes alertPulse {
+      0%, 100% { opacity: 0.1; }
+      50% { opacity: 0.25; }
+    }
+
+    /* Scanlines */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1) 0px,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      animation: scanMove 10s linear infinite;
+    }
+    
+    @keyframes scanMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(3px); }
+    }
+
+    /* Static Noise */
+    .noise {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      animation: noiseAnim 0.2s steps(2) infinite;
+    }
+    
+    @keyframes noiseAnim {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(1%, 1%); }
+    }
+
+    /* Content Container */
+    .content {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      z-index: 10;
+      text-align: center;
+      opacity: 0;
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 90%;
+      max-width: 80vw;
+      padding: 0 5vw;
+    }
+    
+    .content.visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Warning Icon */
+    .warning-icon {
+      width: clamp(100px, 10vw, 180px);
+      height: clamp(100px, 10vw, 180px);
+      margin: 0 auto clamp(20px, 3vw, 50px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .warning-icon svg {
+      width: clamp(80px, 8vw, 150px);
+      height: clamp(80px, 8vw, 150px);
+      color: var(--accent);
+      filter: drop-shadow(0 0 30px var(--accent));
+    }
+
+    /* Title with glitch effect */
+    .title {
+      font-size: clamp(36px, 5vw, 90px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: clamp(10px, 1.5vw, 25px);
+      text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      letter-spacing: -0.02em;
+      position: relative;
+      animation: glitch 3s infinite;
+    }
+    
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-2px, 1px); }
+      94% { transform: translate(2px, -1px); }
+      96% { transform: translate(-1px, -1px); }
+      98% { transform: translate(1px, 1px); }
+    }
+    
+    .title::before,
+    .title::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      right: 0;
+      opacity: 0.8;
+    }
+    
+    .title::before {
+      color: #0ff;
+      animation: glitchTop 3s infinite;
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    }
+    
+    .title::after {
+      color: #f0f;
+      animation: glitchBottom 3s infinite;
+      clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    }
+    
+    @keyframes glitchTop {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(2px, 0); }
+      94% { transform: translate(-2px, 0); }
+    }
+    
+    @keyframes glitchBottom {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-2px, 0); }
+      94% { transform: translate(2px, 0); }
+    }
+
+    /* Subtitle */
+    .subtitle {
+      font-size: clamp(16px, 2vw, 36px);
+      color: rgba(255,255,255,0.6);
+      margin-bottom: clamp(25px, 3.5vw, 60px);
+      font-weight: 500;
+    }
+
+    /* Status Box */
+    .status-box {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(8px, 1vw, 20px);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: clamp(12px, 1.5vw, 25px) clamp(20px, 3vw, 50px);
+      border-radius: clamp(10px, 1.2vw, 20px);
+      margin-bottom: clamp(25px, 3.5vw, 60px);
+    }
+    
+    .status-dot {
+      width: clamp(8px, 0.8vw, 16px);
+      height: clamp(8px, 0.8vw, 16px);
+      background: var(--accent);
+      border-radius: 50%;
+      animation: statusBlink 1s ease-in-out infinite;
+    }
+    
+    @keyframes statusBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .status-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(12px, 1.2vw, 22px);
+      color: rgba(255,255,255,0.8);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      width: clamp(200px, 30vw, 500px);
+      margin: 0 auto;
+    }
+    
+    .progress-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(10px, 1vw, 18px);
+      color: rgba(255,255,255,0.5);
+      margin-bottom: clamp(5px, 0.7vw, 12px);
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      animation: progressAnim 3s ease-in-out infinite;
+    }
+    
+    @keyframes progressAnim {
+      0% { width: 0%; }
+      50% { width: 70%; }
+      100% { width: 0%; }
+    }
+
+    /* Countdown Timer */
+    .countdown {
+      margin-top: clamp(30px, 4vw, 80px);
+      display: none;
+    }
+    
+    .countdown.visible { display: block; }
+    
+    .countdown-label {
+      font-size: clamp(12px, 1.1vw, 20px);
+      color: rgba(255,255,255,0.4);
+      margin-bottom: clamp(5px, 0.7vw, 12px);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    
+    .countdown-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(30px, 3.5vw, 60px);
+      font-weight: 700;
+      color: white;
+    }
+
+    /* Hide state */
+    .content.hidden {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+  </div>
+
+  <!-- Content -->
+  <div id="content" class="content visible">
+    <div class="warning-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+    
+    <h1 id="title" class="title" data-text="Technische Schwierigkeiten">Technische Schwierigkeiten</h1>
+    <p id="subtitle" class="subtitle">Wir arbeiten daran! Bitte warte einen Moment.</p>
+    
+    <div class="status-box">
+      <div class="status-dot"></div>
+      <span class="status-text">Verbindung wird wiederhergestellt</span>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-text">Diagnosing issue...</div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+    
+    <div id="countdown" class="countdown">
+      <div class="countdown-label">Geschätzte Wartezeit</div>
+      <div id="countdown-value" class="countdown-value">05:00</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const content = document.getElementById('content');
+    const titleEl = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    const countdownEl = document.getElementById('countdown');
+    const countdownValue = document.getElementById('countdown-value');
+    
+    let countdownInterval = null;
+    let remainingSeconds = 0;
+    
+    function setAccentColor(color) {
+      document.documentElement.style.setProperty('--accent', color);
+    }
+    
+    function updateCountdown() {
+      if (remainingSeconds <= 0) {
+        clearInterval(countdownInterval);
+        countdownValue.textContent = '00:00';
+        return;
+      }
+      
+      const mins = Math.floor(remainingSeconds / 60);
+      const secs = remainingSeconds % 60;
+      countdownValue.textContent = 
+        String(mins).padStart(2, '0') + ':' + 
+        String(secs).padStart(2, '0');
+      
+      remainingSeconds--;
+    }
+    
+    function startCountdown(minutes) {
+      clearInterval(countdownInterval);
+      remainingSeconds = minutes * 60;
+      countdownEl.classList.add('visible');
+      updateCountdown();
+      countdownInterval = setInterval(updateCountdown, 1000);
+    }
+    
+    function stopCountdown() {
+      clearInterval(countdownInterval);
+      countdownEl.classList.remove('visible');
+    }
+    
+    socket.on('overlay-event', (data) => {
+      if (data.module === 'SCENE_TECHNICAL') {
+        const payload = data.payload;
+        
+        if (payload.action === 'SHOW') {
+          const title = payload.title || 'Technische Schwierigkeiten';
+          titleEl.textContent = title;
+          titleEl.setAttribute('data-text', title);
+          subtitleEl.textContent = payload.subtitle || '';
+          setAccentColor(payload.accentColor || '#ef4444');
+          
+          if (payload.showCountdown && payload.countdownMinutes > 0) {
+            startCountdown(payload.countdownMinutes);
+          } else {
+            stopCountdown();
+          }
+          
+          content.classList.remove('hidden');
+          content.classList.add('visible');
+        }
+        
+        if (payload.action === 'HIDE') {
+          content.classList.remove('visible');
+          content.classList.add('hidden');
+          stopCountdown();
+        }
+      }
+    });
+    
+    // Load initial config
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(config => {
+        const scene = config.overlays?.streamScenes?.scenes?.technical;
+        if (scene) {
+          titleEl.textContent = scene.title;
+          titleEl.setAttribute('data-text', scene.title);
+          subtitleEl.textContent = scene.subtitle;
+          setAccentColor(scene.accentColor);
+        }
+      });
+  </script>
+</body>
+</html>

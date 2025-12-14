@@ -41,9 +41,14 @@ npm run dist:installer # Create Windows NSIS installer (outputs to /installer fo
 1. **Config Interface**: Add to `src/main/store.ts` → `OverlayConfig` interface with defaults
 2. **IPC Handler**: Add `ipcMain.handle('save-[name]-settings', ...)` in `src/main/index.ts`
 3. **Server Route**: Add `app.get('/overlay/[name]', ...)` in `src/main/server.ts`
-4. **Control Component**: Create `src/renderer/src/components/[Name]Control.tsx`
+4. **Control Component**: Create `src/renderer/src/components/[Name]Control.tsx` with `fullWidth?: boolean` prop
 5. **Overlay HTML**: Create `src/renderer/overlays/[name].html` with Socket.io listener
-6. **Dashboard**: Import and add component to `src/renderer/src/pages/Dashboard.tsx` grid
+6. **Dashboard Updates** (CRITICAL - do ALL of these):
+   - Add new tab to `tabs` array in `Dashboard.tsx`
+   - Add case to `renderContent()` switch statement
+   - Add overlay card to `OverviewTab` component
+   - Add Browser Source URL to sidebar
+   - Update Quick Stats numbers if needed
 
 ### Overlay HTML Structure (Template)
 ```html
@@ -95,8 +100,64 @@ exec(`powershell -NoProfile -EncodedCommand ${encodedCommand}`);
 - Overlays copied via `extraResources` in `package.json` build config
 - NSIS installer uses `build/installer.nsh` for custom wizard steps
 
+## Release Process
+
+### Automated Release Script
+```powershell
+# Patch release (1.0.0 → 1.0.1)
+.\scripts\release.ps1 -Type patch
+
+# Minor release (1.0.0 → 1.1.0)
+.\scripts\release.ps1 -Type minor
+
+# Major release (1.0.0 → 2.0.0)
+.\scripts\release.ps1 -Type major
+
+# Beta release (1.0.0 → 1.0.1-beta.1)
+.\scripts\release.ps1 -Type beta
+
+# Specific version
+.\scripts\release.ps1 -Version "1.2.0"
+
+# Dry run (preview without changes)
+.\scripts\release.ps1 -Type minor -DryRun
+```
+
+### What the Release Script Does
+1. Updates `package.json` version
+2. Updates `build/license.txt` version header
+3. Runs `npm run build`
+4. Creates installer via `npm run dist:installer`
+5. Commits changes with message `chore: release vX.X.X`
+6. Creates annotated git tag
+7. Pushes to GitHub (main + tag)
+8. Creates GitHub Release with:
+   - Auto-generated release notes from commits
+   - Installer .exe as download asset
+   - Pre-release flag for beta versions
+
+### Manual Release (Alternative)
+If you need to create a release manually:
+```powershell
+# 1. Update version in package.json
+# 2. Build and create installer
+npm run dist:installer
+
+# 3. Commit and tag
+git add -A
+git commit -m "chore: release v1.x.x"
+git tag -a v1.x.x -m "BroadcastKit v1.x.x"
+
+# 4. Push
+git push origin main
+git push origin v1.x.x
+
+# 5. Create GitHub release
+gh release create v1.x.x --title "BroadcastKit v1.x.x" --generate-notes "installer/BroadcastKit Setup 1.x.x.exe"
+```
+
 ## Installer
 - Update everytime if i add new features or change files:
   - `build/installer.nsh`
   - `package.json` build config `extraResources`
-  - add a new version number in the installer
+  - Run release script to update version automatically

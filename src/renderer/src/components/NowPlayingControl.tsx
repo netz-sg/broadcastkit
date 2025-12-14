@@ -5,6 +5,7 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  fullWidth?: boolean;
 }
 
 type StyleType = 'card' | 'fullwidth';
@@ -22,7 +23,7 @@ interface RawgGameInfo {
   released?: string;
 }
 
-function NowPlayingControl({ config }: Props) {
+function NowPlayingControl({ config, fullWidth = false }: Props) {
   const nowPlayingConfig = config.overlays.nowPlaying || {};
   const hasRawgKey = !!config.rawg?.apiKey;
   

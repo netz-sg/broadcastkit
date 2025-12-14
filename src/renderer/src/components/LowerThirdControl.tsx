@@ -5,11 +5,12 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  fullWidth?: boolean;
 }
 
 type StyleType = 'clean' | 'broadcast' | 'esports';
 
-function LowerThirdControl({ config }: Props) {
+function LowerThirdControl({ config, fullWidth = false }: Props) {
   const [name, setName] = useState(config.overlays.lowerThird.lastUsedName || '');
   const [title, setTitle] = useState(config.overlays.lowerThird.lastUsedTitle || '');
   const [style, setStyle] = useState<StyleType>(config.overlays.lowerThird.style || 'clean');

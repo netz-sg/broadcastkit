@@ -26,7 +26,9 @@ function createWindow(): void {
     frame: true,
     titleBarStyle: 'default',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '../../assets/icon.png'),
+    icon: process.env.NODE_ENV === 'development' 
+      ? path.join(__dirname, '../../assets/icon.png')
+      : path.join(process.resourcesPath, 'assets/icon.png'),
   });
 
   // Load the React app
@@ -124,6 +126,16 @@ ipcMain.handle('save-now-playing-settings', (event, settings) => {
 
 ipcMain.handle('save-social-widget-settings', (event, settings) => {
   configStore.setSocialWidgetConfig(settings);
+  return { success: true };
+});
+
+ipcMain.handle('save-stream-scenes-settings', (event, settings) => {
+  configStore.setStreamScenesConfig(settings);
+  return { success: true };
+});
+
+ipcMain.handle('save-stream-scene', (event, sceneId, scene) => {
+  configStore.setStreamScene(sceneId, scene);
   return { success: true };
 });
 

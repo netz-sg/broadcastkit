@@ -75,6 +75,31 @@ export class ExpressServer {
       res.sendFile(overlayPath);
     });
 
+    // Stream Scenes overlay routes (each scene is a separate browser source)
+    this.app.get('/overlay/scene/starting', (req, res) => {
+      const overlayPath = path.join(this.getOverlaysPath(), 'scene-starting.html');
+      console.log('[Server] Serving Starting Scene overlay from:', overlayPath);
+      res.sendFile(overlayPath);
+    });
+
+    this.app.get('/overlay/scene/brb', (req, res) => {
+      const overlayPath = path.join(this.getOverlaysPath(), 'scene-brb.html');
+      console.log('[Server] Serving BRB Scene overlay from:', overlayPath);
+      res.sendFile(overlayPath);
+    });
+
+    this.app.get('/overlay/scene/ending', (req, res) => {
+      const overlayPath = path.join(this.getOverlaysPath(), 'scene-ending.html');
+      console.log('[Server] Serving Ending Scene overlay from:', overlayPath);
+      res.sendFile(overlayPath);
+    });
+
+    this.app.get('/overlay/scene/technical', (req, res) => {
+      const overlayPath = path.join(this.getOverlaysPath(), 'scene-technical.html');
+      console.log('[Server] Serving Technical Scene overlay from:', overlayPath);
+      res.sendFile(overlayPath);
+    });
+
     // Socket.io client for overlays
     this.app.get('/socket.io/socket.io.js', (req, res) => {
       res.sendFile(path.join(__dirname, '../../node_modules/socket.io/client-dist/socket.io.js'));

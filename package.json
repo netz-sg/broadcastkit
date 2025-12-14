@@ -1,99 +1,108 @@
 {
-  "name": "broadcastkit",
-  "version": "1.0.0-beta.1",
-  "description": "BroadcastKit - Professionelle Stream Overlays für OBS mit automatischer Spielerkennung",
-  "main": "dist/main/index.js",
-  "scripts": {
-    "dev": "concurrently -n \"MAIN,RENDERER\" -c \"cyan,magenta\" \"npm run dev:main\" \"npm run dev:renderer\"",
-    "dev:main": "tsc -p tsconfig.main.json && cross-env NODE_ENV=development electron .",
-    "dev:renderer": "vite",
-    "build": "npm run build:main && npm run build:renderer",
-    "build:main": "tsc -p tsconfig.main.json",
-    "build:renderer": "vite build",
-    "start": "electron .",
-    "clean": "rimraf dist release",
-    "dist": "npm run build && electron-builder --win",
-    "dist:installer": "npm run build && electron-builder --win nsis",
-    "dist:portable": "npm run build && electron-builder --win portable"
-  },
-  "build": {
-    "appId": "com.broadcastkit.app",
-    "productName": "BroadcastKit",
-    "copyright": "Copyright © 2024",
-    "directories": {
-      "output": "installer"
-    },
-    "files": [
-      "dist/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "src/renderer/overlays",
-        "to": "overlays"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "signAndEditExecutable": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "BroadcastKit",
-      "license": "build/license.txt",
-      "include": "build/installer.nsh",
-      "warningsAsErrors": false,
-      "runAfterFinish": true
-    },
-    "portable": {
-      "artifactName": "BroadcastKit-Portable.exe"
-    }
-  },
-  "keywords": [
-    "obs",
-    "overlay",
-    "electron",
-    "streaming"
-  ],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.10.5",
-    "@types/react": "^18.2.45",
-    "@types/react-dom": "^18.2.18",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron": "^28.0.0",
-    "electron-builder": "^26.0.12",
-    "postcss": "^8.4.32",
-    "rimraf": "^5.0.10",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.8"
-  },
-  "dependencies": {
-    "electron-store": "^8.1.0",
-    "express": "^4.18.2",
-    "framer-motion": "^10.16.16",
-    "obs-websocket-js": "^5.0.5",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "socket.io": "^4.6.0",
-    "socket.io-client": "^4.6.0"
-  }
+    "name":  "broadcastkit",
+    "version": "1.3.0",
+    "description":  "BroadcastKit - Professionelle Stream Overlays für OBS mit automatischer Spielerkennung",
+    "main":  "dist/main/index.js",
+    "scripts":  {
+                    "dev":  "concurrently -n \"MAIN,RENDERER\" -c \"cyan,magenta\" \"npm run dev:main\" \"npm run dev:renderer\"",
+                    "dev:main":  "tsc -p tsconfig.main.json \u0026\u0026 cross-env NODE_ENV=development electron .",
+                    "dev:renderer":  "vite",
+                    "build":  "npm run build:main \u0026\u0026 npm run build:renderer",
+                    "build:main":  "tsc -p tsconfig.main.json",
+                    "build:renderer":  "vite build",
+                    "start":  "electron .",
+                    "clean":  "rimraf dist release",
+                    "dist":  "npm run build \u0026\u0026 electron-builder --win",
+                    "dist:installer":  "npm run build \u0026\u0026 electron-builder --win nsis",
+                    "dist:portable":  "npm run build \u0026\u0026 electron-builder --win portable"
+                },
+    "build":  {
+                  "appId":  "com.broadcastkit.app",
+                  "productName":  "BroadcastKit",
+                  "copyright":  "Copyright © 2024",
+                  "icon":  "assets/icon.png",
+                  "directories":  {
+                                      "output":  "installer"
+                                  },
+                  "files":  [
+                                "dist/**/*",
+                                "package.json"
+                            ],
+                  "extraResources":  [
+                                         {
+                                             "from":  "src/renderer/overlays",
+                                             "to":  "overlays"
+                                         },
+                                         {
+                                             "from":  "assets/icon.png",
+                                             "to":  "assets/icon.png"
+                                         }
+                                     ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             },
+                                             {
+                                                 "target":  "portable",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "signAndEditExecutable":  false
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "BroadcastKit",
+                               "license":  "build/license.txt",
+                               "include":  "build/installer.nsh",
+                               "warningsAsErrors":  false,
+                               "runAfterFinish":  true
+                           },
+                  "portable":  {
+                                   "artifactName":  "BroadcastKit-Portable.exe"
+                               }
+              },
+    "keywords":  [
+                     "obs",
+                     "overlay",
+                     "electron",
+                     "streaming"
+                 ],
+    "author":  "",
+    "license":  "MIT",
+    "devDependencies":  {
+                            "@types/express":  "^4.17.21",
+                            "@types/node":  "^20.10.5",
+                            "@types/react":  "^18.2.45",
+                            "@types/react-dom":  "^18.2.18",
+                            "@vitejs/plugin-react":  "^4.2.1",
+                            "autoprefixer":  "^10.4.16",
+                            "concurrently":  "^8.2.2",
+                            "cross-env":  "^7.0.3",
+                            "electron":  "^28.0.0",
+                            "electron-builder":  "^26.0.12",
+                            "postcss":  "^8.4.32",
+                            "rimraf":  "^5.0.10",
+                            "tailwindcss":  "^3.4.0",
+                            "typescript":  "^5.3.3",
+                            "vite":  "^5.0.8"
+                        },
+    "dependencies":  {
+                         "electron-store":  "^8.1.0",
+                         "express":  "^4.18.2",
+                         "framer-motion":  "^10.16.16",
+                         "obs-websocket-js":  "^5.0.5",
+                         "react":  "^18.2.0",
+                         "react-dom":  "^18.2.0",
+                         "socket.io":  "^4.6.0",
+                         "socket.io-client":  "^4.6.0"
+                     }
 }
