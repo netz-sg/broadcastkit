@@ -1,6 +1,6 @@
 {
     "name": "broadcastkit",
-    "version": "1.4.3",
+    "version": "1.4.4",
     "description": "BroadcastKit - Professionelle Stream Overlays fÃƒÆ’Ã‚Â¼r OBS mit automatischer Spielerkennung",
     "main": "dist/main/index.js",
     "scripts": {

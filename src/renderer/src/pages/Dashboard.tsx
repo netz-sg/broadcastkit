@@ -113,13 +113,9 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
-      {/* Sidebar Navigation */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="lg:w-64 flex-shrink-0"
-      >
-        <div className="card p-2 lg:p-3">
+      {/* Sidebar Navigation - Fixed width, no animation */}
+      <div className="lg:w-64 flex-shrink-0">
+        <div className="card p-2 lg:p-3 lg:sticky lg:top-4">
           <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
             {tabs.map((tab) => (
               <button
@@ -143,7 +139,7 @@ function Dashboard() {
         </div>
 
         {/* Browser Source URLs - Desktop Only */}
-        <div className="card mt-4 hidden lg:block">
+        <div className="card mt-4 hidden lg:block lg:sticky lg:top-48">
           <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Browser Sources</h4>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
@@ -179,7 +175,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main Content Area */}
       <div className="flex-1 min-w-0">
