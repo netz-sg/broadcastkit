@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Now Playing Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .font-tech { font-family: 'Rajdhani', sans-serif; }
+
+    /* ==================== ANIMATIONS ==================== */
+    @keyframes popUp {
+      0% { transform: translateY(100%); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes popDown {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+    @keyframes slideIn {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-100%); opacity: 0; }
+    }
+    @keyframes gradientX {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+    @keyframes progressBar {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    /* ==================== CARD STYLE CONTAINER ==================== */
+    .card-container {
+      position: absolute;
+      bottom: 80px;
+      left: 80px;
+      pointer-events: none;
+    }
+
+    /* ==================== FULLWIDTH STYLE CONTAINER ==================== */
+    .fullwidth-container {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    /* ==================== 1. CARD STYLE (3D Glass / Vinyl) ==================== */
+    .card-style {
+      display: none;
+      align-items: center;
+    }
+    .card-style.visible {
+      display: flex;
+      animation: popUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .card-style.hiding {
+      animation: popDown 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .card-cover-wrapper {
+      position: relative;
+      z-index: 20;
+      perspective: 1000px;
+    }
+    .card-cover {
+      width: 140px;
+      aspect-ratio: 9/16;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      background: #1a1a1a;
+      transition: transform 0.5s;
+    }
+    .card-cover:hover {
+      transform: rotateY(10deg) scale(1.02);
+    }
+    .card-reflection {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      right: 0;
+      height: 60px;
+      transform: scaleY(-0.4);
+      opacity: 0.25;
+      filter: blur(4px);
+      overflow: hidden;
+      border-radius: 16px;
+    }
+    .card-reflection img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    .card-info {
+      position: relative;
+      z-index: 10;
+      margin-left: -30px;
+      padding: 24px 40px 24px 50px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0 24px 24px 0;
+      min-width: 350px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+    .card-info::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, #6366f1, #a855f7);
+      border-radius: 3px 0 0 3px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    .card-pulse {
+      width: 8px;
+      height: 8px;
+      background: #818cf8;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    .card-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-subtitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-progress {
+      margin-top: 16px;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .card-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      background-size: 200% 100%;
+      animation: gradientX 2s infinite, progressBar var(--duration, 10s) linear forwards;
+    }
+
+    /* ==================== 2. FULLWIDTH STYLE (Cinematic HUD) ==================== */
+    .fullwidth-style {
+      display: none;
+      align-items: flex-end;
+      width: 90%;
+      max-width: 1200px;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+    }
+    .fullwidth-style.visible {
+      display: flex;
+      animation: popUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .fullwidth-style.hiding {
+      animation: popDown 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .fullwidth-cover-wrapper {
+      position: relative;
+      z-index: 30;
+      margin-right: -40px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+    .fullwidth-cover {
+      width: 120px;
+      aspect-ratio: 9/16;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      background: #0a0a0a;
+      transition: transform 0.3s;
+    }
+    .fullwidth-cover:hover {
+      transform: translateY(-8px);
+    }
+    .fullwidth-scanline {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .fullwidth-scanline::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent);
+      height: 30%;
+      animation: scanline 3s linear infinite;
+    }
+
+    .fullwidth-bar {
+      flex: 1;
+      background: #09090b;
+      border-top: 1px solid rgba(99, 102, 241, 0.5);
+      border-bottom: 1px solid rgba(99, 102, 241, 0.5);
+      height: 100px;
+      display: flex;
+      align-items: center;
+      padding: 0 40px 0 60px;
+      border-radius: 0 16px 16px 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(99, 102, 241, 0.15);
+    }
+    .fullwidth-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.5), transparent 60%);
+    }
+    .fullwidth-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.2;
+      background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 5v1H0V5L5 0zm0 5h1v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .fullwidth-left {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      margin-left: 10px;
+    }
+    .fullwidth-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .fullwidth-bars {
+      display: flex;
+      gap: 3px;
+    }
+    .fullwidth-bars span {
+      width: 4px;
+      height: 14px;
+      background: #6366f1;
+      border-radius: 2px;
+    }
+    .fullwidth-bars span:nth-child(2) { opacity: 0.5; }
+    .fullwidth-bars span:nth-child(3) { opacity: 0.2; }
+    
+    .fullwidth-label-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+    .fullwidth-title {
+      font-size: 44px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      font-style: italic;
+      letter-spacing: -1px;
+      line-height: 1;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      max-width: 600px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fullwidth-divider {
+      width: 1px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.1);
+      transform: skewX(-20deg);
+      margin: 0 40px;
+    }
+
+    .fullwidth-right {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .fullwidth-status-label {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 6px;
+    }
+    .fullwidth-subtitle {
+      font-size: 18px;
+      font-weight: 500;
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: 'Rajdhani', monospace;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- CARD STYLE CONTAINER -->
+  <div class="card-container">
+    <div id="cardStyle" class="card-style">
+      <div class="card-cover-wrapper">
+        <img id="cardCover" class="card-cover" src="https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png" alt="Cover">
+        <div class="card-reflection">
+          <img id="cardCoverReflect" src="https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png" alt="">
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-header">
+          <span class="card-badge">Now Playing</span>
+          <div class="card-pulse"></div>
+        </div>
+        <div id="cardTitle" class="card-title">Game Title</div>
+        <div id="cardSubtitle" class="card-subtitle">Game Mode</div>
+        <div class="card-progress">
+          <div id="cardProgressBar" class="card-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLWIDTH STYLE CONTAINER -->
+  <div class="fullwidth-container">
+    <div id="fullwidthStyle" class="fullwidth-style font-tech">
+      <div class="fullwidth-cover-wrapper">
+        <img id="fullwidthCover" class="fullwidth-cover" src="https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png" alt="Cover">
+        <div class="fullwidth-scanline"></div>
+      </div>
+      <div class="fullwidth-bar">
+        <div class="fullwidth-left">
+          <div class="fullwidth-label">
+            <div class="fullwidth-bars">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="fullwidth-label-text">Current Objective</span>
+          </div>
+          <div id="fullwidthTitle" class="fullwidth-title">Game Title</div>
+        </div>
+        <div class="fullwidth-divider"></div>
+        <div class="fullwidth-right">
+          <span class="fullwidth-status-label">Status / Details</span>
+          <span id="fullwidthSubtitle" class="fullwidth-subtitle">Game Mode</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+    
+    const cardStyle = document.getElementById('cardStyle');
+    const fullwidthStyle = document.getElementById('fullwidthStyle');
+    
+    const cardCover = document.getElementById('cardCover');
+    const cardCoverReflect = document.getElementById('cardCoverReflect');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardSubtitle = document.getElementById('cardSubtitle');
+    const cardProgressBar = document.getElementById('cardProgressBar');
+    
+    const fullwidthCover = document.getElementById('fullwidthCover');
+    const fullwidthTitle = document.getElementById('fullwidthTitle');
+    const fullwidthSubtitle = document.getElementById('fullwidthSubtitle');
+
+    let hideTimeout;
+    let currentStyle = null;
+    const defaultDuration = 10;
+    const defaultCover = 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png';
+
+    function hideAllStyles() {
+      [cardStyle, fullwidthStyle].forEach(el => {
+        el.classList.remove('visible', 'hiding');
+      });
+    }
+
+    function showOverlay(style, title, subtitle, cover, duration) {
+      hideAllStyles();
+      
+      setTimeout(() => {
+        currentStyle = style;
+        const coverUrl = cover || defaultCover;
+        
+        switch (style) {
+          case 'card':
+            cardCover.src = coverUrl;
+            cardCoverReflect.src = coverUrl;
+            cardTitle.textContent = title || 'Game Title';
+            cardSubtitle.textContent = subtitle || 'Game Mode';
+            cardProgressBar.style.setProperty('--duration', duration + 's');
+            cardProgressBar.style.animation = 'none';
+            cardProgressBar.offsetHeight; // Trigger reflow
+            cardProgressBar.style.animation = `gradientX 2s infinite, progressBar ${duration}s linear forwards`;
+            cardStyle.classList.add('visible');
+            break;
+            
+          case 'fullwidth':
+            fullwidthCover.src = coverUrl;
+            fullwidthTitle.textContent = title || 'Game Title';
+            fullwidthSubtitle.textContent = subtitle || 'Game Mode';
+            fullwidthStyle.classList.add('visible');
+            break;
+            
+          default:
+            cardCover.src = coverUrl;
+            cardCoverReflect.src = coverUrl;
+            cardTitle.textContent = title || 'Game Title';
+            cardSubtitle.textContent = subtitle || 'Game Mode';
+            cardProgressBar.style.setProperty('--duration', duration + 's');
+            cardStyle.classList.add('visible');
+            currentStyle = 'card';
+        }
+
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => hideOverlay(), duration * 1000);
+      }, 50);
+    }
+
+    function hideOverlay() {
+      clearTimeout(hideTimeout);
+      if (!currentStyle) return;
+
+      const styleMap = { card: cardStyle, fullwidth: fullwidthStyle };
+      const el = styleMap[currentStyle];
+      
+      if (el) {
+        el.classList.add('hiding');
+        setTimeout(() => {
+          el.classList.remove('visible', 'hiding');
+        }, 500);
+      }
+      currentStyle = null;
+    }
+
+    socket.on('overlay-event', (data) => {
+      if (data.module !== 'NOW_PLAYING') return;
+
+      if (data.action === 'SHOW') {
+        const { title, subtitle, cover, style, duration } = data.payload;
+        showOverlay(style || 'card', title, subtitle, cover, duration || defaultDuration);
+      } else if (data.action === 'HIDE') {
+        hideOverlay();
+      }
+    });
+
+    // Refresh overlay when settings change
+    socket.on('refresh-overlay', () => {
+      console.log('Refreshing overlay...');
+      window.location.reload();
+    });
+
+    socket.on('connect', () => console.log('Connected to overlay server'));
+    socket.on('disconnect', () => console.log('Disconnected from overlay server'));
+  </script>
+</body>
+</html>

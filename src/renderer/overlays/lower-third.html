@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lower Third Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .font-tech { font-family: 'Rajdhani', sans-serif; }
+
+    /* ==================== ANIMATIONS ==================== */
+    @keyframes slideIn {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-100%); opacity: 0; }
+    }
+    @keyframes glitch {
+      0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 1px) skewX(-10deg); }
+      20% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -1px) skewX(-10deg); }
+      40% { clip-path: inset(40% 0 40% 0); transform: translate(-1px, 2px) skewX(-10deg); }
+      100% { clip-path: inset(0 0 0 0); transform: translate(0) skewX(-10deg); }
+    }
+    @keyframes pulseRing {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) skewX(12deg); }
+      100% { transform: translateX(200%) skewX(12deg); }
+    }
+    @keyframes gradientX {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* ==================== CONTAINER ==================== */
+    .lower-third-container {
+      position: absolute;
+      bottom: 80px;
+      left: 80px;
+      pointer-events: none;
+    }
+
+    /* ==================== 1. CLEAN PRO ==================== */
+    .clean-style {
+      display: none;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 40px 12px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(24px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .clean-style.visible {
+      display: flex;
+      animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .clean-style.hiding {
+      animation: slideOut 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .clean-avatar-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .clean-avatar-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      animation: pulseRing 2s infinite;
+    }
+    .clean-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+    .clean-online {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 16px;
+      height: 16px;
+      background: #22c55e;
+      border-radius: 50%;
+      border: 3px solid black;
+      z-index: 2;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+    }
+    .clean-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .clean-name {
+      font-size: 26px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+    }
+    .clean-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .clean-badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    /* ==================== 2. BROADCAST / NEWS ROOM ==================== */
+    .broadcast-style {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+    }
+    .broadcast-style.visible {
+      display: flex;
+      animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .broadcast-style.hiding {
+      animation: slideOut 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .broadcast-accent {
+      width: 100px;
+      height: 4px;
+      background: linear-gradient(to right, #f97316, #eab308);
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .broadcast-name-bar {
+      display: flex;
+      background: #0f172a;
+      border-left: 5px solid #f97316;
+      border-radius: 0 8px 8px 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .broadcast-name-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      animation: shimmer 2s infinite;
+    }
+    .broadcast-name {
+      padding: 16px 32px;
+      font-size: 38px;
+      font-weight: 900;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .broadcast-subtitle-bar {
+      margin-top: -4px;
+      margin-left: 20px;
+      background: white;
+      color: #0f172a;
+      padding: 8px 20px;
+      border-radius: 0 0 8px 8px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .broadcast-live-dot {
+      width: 10px;
+      height: 10px;
+      background: #dc2626;
+      border-radius: 50%;
+      animation: pulseRing 1.5s infinite;
+    }
+
+    /* ==================== 3. ESPORTS / TOURNAMENT ==================== */
+    .esports-style {
+      display: none;
+      transform: skewX(-10deg);
+      transform-origin: bottom left;
+    }
+    .esports-style.visible {
+      display: block;
+      animation: glitch 0.4s linear forwards;
+    }
+    .esports-style.hiding {
+      animation: slideOut 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .esports-wrapper {
+      position: relative;
+      padding: 2px;
+      background: linear-gradient(135deg, #9333ea, #ec4899, #3b82f6);
+      background-size: 200% 200%;
+      animation: gradientX 3s ease infinite;
+      clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+    }
+    .esports-content {
+      background: #0f0f0f;
+      padding: 24px 60px;
+      clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .esports-content::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.15;
+      background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 12px 12px;
+    }
+    .esports-inner {
+      position: relative;
+      z-index: 1;
+      transform: skewX(10deg);
+    }
+    .esports-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .esports-badge {
+      color: #facc15;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+    .esports-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    .esports-name {
+      font-size: 52px;
+      font-weight: 800;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      line-height: 1;
+      text-shadow: 0 3px 0 rgba(147, 51, 234, 1);
+    }
+    .esports-subtitle {
+      color: #9ca3af;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .esports-deco {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 150px;
+      height: 3px;
+      background: linear-gradient(to right, #9333ea, transparent);
+    }
+  </style>
+</head>
+<body>
+  <div class="lower-third-container">
+    
+    <!-- 1. CLEAN PRO -->
+    <div id="cleanStyle" class="clean-style">
+      <div class="clean-avatar-wrapper">
+        <img id="cleanAvatar" class="clean-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar">
+        <div class="clean-online"></div>
+      </div>
+      <div class="clean-content">
+        <div id="cleanName" class="clean-name">Player Name</div>
+        <div class="clean-meta">
+          <span class="clean-badge">Host</span>
+          <span id="cleanHandle">@handle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. BROADCAST / NEWS ROOM -->
+    <div id="broadcastStyle" class="broadcast-style">
+      <div class="broadcast-accent"></div>
+      <div class="broadcast-name-bar">
+        <div id="broadcastName" class="broadcast-name">Player Name</div>
+      </div>
+      <div class="broadcast-subtitle-bar">
+        <div class="broadcast-live-dot"></div>
+        <span id="broadcastHandle">@handle</span>
+      </div>
+    </div>
+
+    <!-- 3. ESPORTS / TOURNAMENT -->
+    <div id="esportsStyle" class="esports-style font-tech">
+      <div class="esports-wrapper">
+        <div class="esports-content">
+          <div class="esports-inner">
+            <div class="esports-label">
+              <span class="esports-badge">Player 01</span>
+              <div class="esports-line"></div>
+            </div>
+            <div id="esportsName" class="esports-name">Player Name</div>
+            <div id="esportsHandle" class="esports-subtitle">@handle</div>
+          </div>
+          <div class="esports-deco"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+    
+    const cleanStyle = document.getElementById('cleanStyle');
+    const broadcastStyle = document.getElementById('broadcastStyle');
+    const esportsStyle = document.getElementById('esportsStyle');
+    
+    const cleanAvatar = document.getElementById('cleanAvatar');
+    const cleanName = document.getElementById('cleanName');
+    const cleanHandle = document.getElementById('cleanHandle');
+    
+    const broadcastName = document.getElementById('broadcastName');
+    const broadcastHandle = document.getElementById('broadcastHandle');
+    
+    const esportsName = document.getElementById('esportsName');
+    const esportsHandle = document.getElementById('esportsHandle');
+
+    let hideTimeout;
+    let currentStyle = null;
+    const defaultDuration = 8;
+    const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix';
+
+    function hideAllStyles() {
+      [cleanStyle, broadcastStyle, esportsStyle].forEach(el => {
+        el.classList.remove('visible', 'hiding');
+      });
+    }
+
+    function showOverlay(style, name, title, avatar, duration) {
+      hideAllStyles();
+      
+      setTimeout(() => {
+        currentStyle = style;
+        
+        switch (style) {
+          case 'clean':
+            cleanAvatar.src = avatar || defaultAvatar;
+            cleanName.textContent = name || 'Name';
+            cleanHandle.textContent = title || '@handle';
+            cleanStyle.classList.add('visible');
+            break;
+          case 'broadcast':
+            broadcastName.textContent = name || 'Name';
+            broadcastHandle.textContent = title || '@handle';
+            broadcastStyle.classList.add('visible');
+            break;
+          case 'esports':
+            esportsName.textContent = name || 'Name';
+            esportsHandle.textContent = title || '@handle';
+            esportsStyle.classList.add('visible');
+            break;
+          default:
+            cleanAvatar.src = avatar || defaultAvatar;
+            cleanName.textContent = name || 'Name';
+            cleanHandle.textContent = title || '@handle';
+            cleanStyle.classList.add('visible');
+            currentStyle = 'clean';
+        }
+
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => hideOverlay(), duration * 1000);
+      }, 50);
+    }
+
+    function hideOverlay() {
+      clearTimeout(hideTimeout);
+      if (!currentStyle) return;
+
+      const styleMap = { clean: cleanStyle, broadcast: broadcastStyle, esports: esportsStyle };
+      const el = styleMap[currentStyle];
+      
+      if (el) {
+        el.classList.add('hiding');
+        setTimeout(() => {
+          el.classList.remove('visible', 'hiding');
+        }, 500);
+      }
+      currentStyle = null;
+    }
+
+    socket.on('overlay-event', (data) => {
+      if (data.module !== 'LOWER_THIRD') return;
+
+      if (data.action === 'SHOW') {
+        const { name, title, style, avatar, duration } = data.payload;
+        showOverlay(style || 'clean', name, title, avatar, duration || defaultDuration);
+      } else if (data.action === 'HIDE') {
+        hideOverlay();
+      }
+    });
+
+    // Refresh overlay when settings change
+    socket.on('refresh-overlay', () => {
+      console.log('Refreshing overlay...');
+      window.location.reload();
+    });
+
+    socket.on('connect', () => console.log('Connected to overlay server'));
+    socket.on('disconnect', () => console.log('Disconnected from overlay server'));
+  </script>
+</body>
+</html>
