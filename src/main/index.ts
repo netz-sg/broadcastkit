@@ -5,6 +5,8 @@ import { expressServer } from './server';
 import { configStore } from './store';
 import { getAllGameCandidates } from './services/gameDetector';
 import { searchGame, validateApiKey } from './services/rawgApi';
+// Import updater early to register IPC handlers
+import './updater';
 import { initAutoUpdater } from './updater';
 
 let mainWindow: BrowserWindow | null = null;
