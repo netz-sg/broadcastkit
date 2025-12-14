@@ -41,12 +41,28 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
   ]);
   const [style, setStyle] = useState<StyleType>(socialConfig.style || 'clean');
   const [displayDuration, setDisplayDuration] = useState(socialConfig.displayDuration || 5);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(socialConfig.isRunning !== false); // Default to true
   const [previewIndex, setPreviewIndex] = useState(0);
   
   const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const enabledLinks = links.filter(l => l.enabled);
+
+  // Auto-start widget on mount if there are enabled links
+  useEffect(() => {
+    if (enabledLinks.length > 0 && isRunning) {
+      ipcRenderer.invoke('trigger-overlay', {
+        action: 'SHOW',
+        module: 'SOCIAL_WIDGET',
+        payload: { 
+          links: enabledLinks, 
+          style, 
+          displayDuration,
+          running: true 
+        },
+      });
+    }
+  }, []); // Only on mount
 
   // Preview Rotation
   useEffect(() => {

@@ -475,6 +475,24 @@
       location.reload();
     });
 
+    // Load initial config and start widget automatically
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(config => {
+        const socialConfig = config.overlays?.socialWidget;
+        if (socialConfig && socialConfig.links && socialConfig.links.length > 0) {
+          currentLinks = socialConfig.links.filter(link => link.enabled);
+          currentStyle = socialConfig.style || 'clean';
+          displayDuration = (socialConfig.displayDuration || 5) * 1000;
+          
+          if (currentLinks.length > 0) {
+            currentIndex = 0;
+            startRotation();
+          }
+        }
+      })
+      .catch(err => console.error('Failed to load config:', err));
+
     console.log('Social Widget Overlay loaded');
   </script>
 </body>

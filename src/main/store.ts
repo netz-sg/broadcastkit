@@ -128,7 +128,7 @@ const defaultConfig: AppConfig = {
       ],
       style: 'clean',
       displayDuration: 5,
-      isRunning: false,
+      isRunning: true,
     },
     streamScenes: {
       scenes: {

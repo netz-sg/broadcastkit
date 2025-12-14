@@ -1,7 +1,7 @@
 {
     "name":  "broadcastkit",
-    "version": "1.3.0",
-    "description":  "BroadcastKit - Professionelle Stream Overlays für OBS mit automatischer Spielerkennung",
+    "version": "1.3.1",
+    "description":  "BroadcastKit - Professionelle Stream Overlays fÃ¼r OBS mit automatischer Spielerkennung",
     "main":  "dist/main/index.js",
     "scripts":  {
                     "dev":  "concurrently -n \"MAIN,RENDERER\" -c \"cyan,magenta\" \"npm run dev:main\" \"npm run dev:renderer\"",
@@ -19,7 +19,7 @@
     "build":  {
                   "appId":  "com.broadcastkit.app",
                   "productName":  "BroadcastKit",
-                  "copyright":  "Copyright © 2024",
+                  "copyright":  "Copyright Â© 2024",
                   "icon":  "assets/icon.png",
                   "directories":  {
                                       "output":  "installer"
