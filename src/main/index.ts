@@ -5,6 +5,7 @@ import { expressServer } from './server';
 import { configStore } from './store';
 import { getAllGameCandidates } from './services/gameDetector';
 import { searchGame, validateApiKey } from './services/rawgApi';
+import { initAutoUpdater } from './updater';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -199,6 +200,11 @@ ipcMain.handle('disconnect-obs', async () => {
 app.whenReady().then(async () => {
   await initializeApp();
   createWindow();
+
+  // Initialize auto-updater after window is created
+  if (mainWindow) {
+    initAutoUpdater(mainWindow);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -1,57 +1,50 @@
 ===================================================================
-                   BROADCASTKIT - BETA v1.0.0
+                      BROADCASTKIT LIZENZ
 ===================================================================
 
-WILLKOMMEN!
+MIT License
 
-BroadcastKit ermoeglicht es dir, professionelle Overlays fuer 
-OBS Studio zu erstellen und zu steuern - alles lokal auf 
-deinem Computer.
+Copyright (c) 2024 BroadcastKit
 
+Hiermit wird jeder Person, die eine Kopie dieser Software und 
+der zugehoerigen Dokumentationsdateien (die "Software") erhaelt, 
+kostenlos die Erlaubnis erteilt, ohne Einschraenkung mit der 
+Software zu handeln, einschliesslich und ohne Einschraenkung 
+der Rechte zur Nutzung, zum Kopieren, Aendern, Zusammenfuehren, 
+Veroeffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen 
+von Kopien der Software, und Personen, denen die Software zur 
+Verfuegung gestellt wird, dies unter den folgenden Bedingungen 
+zu gestatten:
 
-FEATURES:
----------
-[+] Lower Third Overlays
-    3 Premium Styles: Clean Pro, Broadcast News, Esports HUD
-    Mit Avatar-Support und animierten Effekten
+Der obige Urheberrechtshinweis und dieser Genehmigungshinweis 
+muessen in allen Kopien oder wesentlichen Teilen der Software 
+enthalten sein.
 
-[+] Now Playing Widget  
-    Zeigt automatisch das aktuelle Spiel mit Cover an
-    2 Styles: 3D Card, Cinematic Fullwidth
-    Automatische Spielerkennung via RAWG API
-
-[+] Social Media Widget (NEU!)
-    Rotierende Social Media Cards fuer deine Kanaele
-    Twitch, YouTube, TikTok, Instagram, Twitter, Discord
-    Individuelle Anzeigedauer pro Plattform
-    Auto-Rotation mit konfigurierbarem Intervall
-
-[+] OBS Integration
-    Auto-Connect beim Start
-    Browser Source Refresh aus der App
-    Echtzeit-Steuerung aller Overlays
+DIE SOFTWARE WIRD "WIE BESEHEN" OHNE JEGLICHE AUSDRUECKLICHE 
+ODER STILLSCHWEIGENDE GEWAEHRLEISTUNG BEREITGESTELLT, 
+EINSCHLIESSLICH, ABER NICHT BESCHRAENKT AUF DIE GEWAEHRLEISTUNG 
+DER MARKTGAENGIGKEIT, DER EIGNUNG FUER EINEN BESTIMMTEN ZWECK 
+UND DER NICHTVERLETZUNG VON RECHTEN. IN KEINEM FALL SIND DIE 
+AUTOREN ODER URHEBERRECHTSINHABER FUER ANSPRUECHE, SCHAEDEN 
+ODER ANDERE HAFTUNGEN VERANTWORTLICH, SEI ES AUS VERTRAG, 
+UNERLAUBTER HANDLUNG ODER ANDERWEITIG, DIE SICH AUS DER 
+SOFTWARE ODER DER NUTZUNG ODER ANDEREN GESCHAEFTEN MIT DER 
+SOFTWARE ERGEBEN.
 
 
 BETA-HINWEIS:
 -------------
-Diese Software befindet sich noch in der Entwicklung!
-
-* Einige Funktionen koennen noch fehlerhaft sein
-* Feedback und Fehlermeldungen sind willkommen
-* Updates koennen Breaking Changes enthalten
+Diese Software befindet sich noch in aktiver Entwicklung.
+Es wird keine Garantie fuer fehlerfreien Betrieb gegeben.
 
 
 SYSTEMANFORDERUNGEN:
 --------------------
 * Windows 10/11 (64-bit)
 * OBS Studio mit WebSocket Plugin (v5.x)
-* Internetverbindung fuer Spielerkennung (RAWG API)
+* Internetverbindung fuer Spielerkennung (optional)
 
-
-Mit der Installation akzeptierst du, dass es sich um 
-Beta-Software handelt und keine Garantie fuer fehlerfreien 
-Betrieb gegeben wird.
 
 ===================================================================
-              (c) 2024 - Viel Spass beim Streamen!
+     Mit der Installation akzeptierst du diese Bedingungen.
 ===================================================================
