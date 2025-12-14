@@ -1,6 +1,6 @@
-# BroadcastKit Release Script
-# Usage: .\scripts\release.ps1 -Version "1.1.0" -Type "minor"
-# Types: major, minor, patch, beta
+# BroadcastKit Release Script v3.0
+# Automatische Changelog-Generierung aus geaenderten Dateien
+# Usage: .\scripts\release.ps1 -Type minor
 
 param(
     [Parameter(Mandatory=$false)]
@@ -11,15 +11,11 @@ param(
     [string]$Type = "patch",
     
     [Parameter(Mandatory=$false)]
-    [string]$ReleaseNotes,
-    
-    [Parameter(Mandatory=$false)]
     [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
 
-# Colors for output
 function Write-Step($message) {
     Write-Host "[->] " -NoNewline -ForegroundColor Cyan
     Write-Host $message -ForegroundColor White
@@ -30,29 +26,24 @@ function Write-Success($message) {
     Write-Host $message
 }
 
-function Write-Error($message) {
-    Write-Host "[X] " -NoNewline -ForegroundColor Red
-    Write-Host $message
-}
-
 # Banner
 Write-Host ""
 Write-Host "  ____                      _               _   _  ___ _   " -ForegroundColor Magenta
 Write-Host " | __ ) _ __ ___   __ _  __| | ___ __ _ ___| |_| |/ (_) |_ " -ForegroundColor Magenta
 Write-Host " |  _ \| '__/ _ \ / _' |/ _' |/ __/ _' / __| __| ' /| | __|" -ForegroundColor Magenta
-Write-Host " | |_) | | | (_) | (_| | (_| | (_| (_| \__ \ |_| . \| | |_ " -ForegroundColor Magenta
+Write-Host " | |_) | | | (_) | (_| | (_| | (_| (_| \__ \ |_| . \| | |_" -ForegroundColor Magenta
 Write-Host " |____/|_|  \___/ \__,_|\__,_|\___\__,_|___/\__|_|\_\_|\__|" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  Release Script v2.0" -ForegroundColor DarkGray
+Write-Host "  Release Script v3.0 - Auto Changelog" -ForegroundColor DarkGray
 Write-Host ""
 
-# Get current version from package.json
+# Get current version
 $packageJson = Get-Content "package.json" -Raw | ConvertFrom-Json
 $currentVersion = $packageJson.version
 Write-Host "Current version: " -NoNewline
 Write-Host $currentVersion -ForegroundColor Yellow
 
-# Calculate new version if not provided
+# Calculate new version
 if (-not $Version) {
     $versionParts = $currentVersion -replace "-beta.*", "" -split "\."
     $major = [int]$versionParts[0]
@@ -72,10 +63,7 @@ if (-not $Version) {
             $Version = "$major.$minor.$patch-beta.$betaNum"
         }
     }
-    
-    if ($Type -ne "beta") {
-        $Version = "$major.$minor.$patch"
-    }
+    if ($Type -ne "beta") { $Version = "$major.$minor.$patch" }
 }
 
 $isPrerelease = $Version -match "beta|alpha|rc"
@@ -85,11 +73,133 @@ Write-Host "New version: " -NoNewline
 Write-Host $Version -ForegroundColor Green
 Write-Host "Tag: " -NoNewline
 Write-Host $tagName -ForegroundColor Cyan
-Write-Host "Pre-release: " -NoNewline
-Write-Host $isPrerelease -ForegroundColor $(if ($isPrerelease) { "Yellow" } else { "Green" })
 
 if ($DryRun) {
-    Write-Host "`n[DRY RUN MODE - No changes will be made]" -ForegroundColor Yellow
+    Write-Host "`n[DRY RUN MODE]" -ForegroundColor Yellow
+}
+
+# Analyze changed files and generate changelog
+Write-Step "Analysiere Aenderungen..."
+
+$lastTag = git describe --tags --abbrev=0 2>$null
+$features = @()
+$fixes = @()
+$improvements = @()
+
+# Get changed files: committed since last tag + staged + unstaged
+$changedFiles = @()
+
+if ($lastTag) {
+    # Files changed in commits since last tag
+    $committedFiles = git diff --name-only "$lastTag..HEAD" 2>$null
+    if ($committedFiles) { $changedFiles += $committedFiles }
+}
+
+# Also include staged and unstaged changes (current work)
+$stagedFiles = git diff --cached --name-only 2>$null
+$unstagedFiles = git diff --name-only 2>$null
+if ($stagedFiles) { $changedFiles += $stagedFiles }
+if ($unstagedFiles) { $changedFiles += $unstagedFiles }
+
+# Remove duplicates
+$changedFiles = $changedFiles | Select-Object -Unique
+
+Write-Host "Gefundene geaenderte Dateien: $($changedFiles.Count)" -ForegroundColor DarkGray
+
+# Analyze each changed file and categorize
+foreach ($file in $changedFiles) {
+    if ([string]::IsNullOrWhiteSpace($file)) { continue }
+    
+    # New overlay files = Feature
+    if ($file -match "overlays/scene-.*\.html$") {
+        $sceneName = [regex]::Match($file, "scene-(.+)\.html").Groups[1].Value
+        $sceneNames = @{
+            "starting" = "Starting Soon"
+            "brb" = "Be Right Back"
+            "ending" = "Stream Ending"
+            "technical" = "Technical Difficulties"
+        }
+        if ($sceneNames.ContainsKey($sceneName)) {
+            $entry = "**Stream Scene: $($sceneNames[$sceneName])** - Neues Fullscreen Overlay"
+            if ($features -notcontains "- $entry") { $features += "- $entry" }
+        }
+    }
+    elseif ($file -match "overlays/.*\.html$" -and $file -notmatch "scene-") {
+        # Check if it's a modification (responsive, fix, etc) by looking at diff
+        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
+        if ($diffContent -match "clamp\(|vw|vh|100vw|100vh") {
+            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
+            $entry = "**$overlayName Overlay** - Responsive Design fuer alle Aufloesungen"
+            if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
+        }
+        if ($diffContent -match "classList\.add\('visible'\)|\.visible") {
+            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
+            $entry = "**$overlayName** - Wird jetzt standardmaessig angezeigt"
+            if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
+        }
+        if ($diffContent -match "fetch\('/api/config'\)") {
+            $overlayName = [regex]::Match($file, "overlays/(.+)\.html").Groups[1].Value
+            $entry = "**$overlayName** - Laed Einstellungen automatisch"
+            if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
+        }
+    }
+    
+    # New component files = Feature
+    elseif ($file -match "components/.*Control\.tsx$") {
+        $componentName = [regex]::Match($file, "components/(.+)Control\.tsx").Groups[1].Value
+        # Check if new file
+        $existsInLastTag = git show "${lastTag}:$file" 2>$null
+        if (-not $existsInLastTag) {
+            $entry = "**$componentName** - Neues Control Panel im Dashboard"
+            if ($features -notcontains "- $entry") { $features += "- $entry" }
+        }
+    }
+    
+    # Store changes = might be fix or improvement
+    elseif ($file -match "store\.ts$") {
+        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
+        if ($diffContent -match "isRunning:\s*true") {
+            $entry = "Social Widget startet jetzt automatisch"
+            if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
+        }
+        if ($diffContent -match "interface.*Scene|streamScenes") {
+            $entry = "**Stream Scenes Config** - Neue Konfigurationsoptionen"
+            if ($features -notcontains "- $entry") { $features += "- $entry" }
+        }
+    }
+    
+    # Config files
+    elseif ($file -match "postcss\.config") {
+        $entry = "PostCSS Konfiguration hinzugefuegt/repariert"
+        if ($fixes -notcontains "- $entry") { $fixes += "- $entry" }
+    }
+    
+    # Release script
+    elseif ($file -match "release\.ps1$") {
+        $entry = "Release Script mit automatischer Changelog-Generierung"
+        if ($improvements -notcontains "- $entry") { $improvements += "- $entry" }
+    }
+    
+    # Server changes
+    elseif ($file -match "server\.ts$") {
+        $diffContent = git diff "$lastTag..HEAD" -- $file 2>$null
+        if ($diffContent -match "scene-") {
+            $entry = "Server-Routes fuer Stream Scenes"
+            if ($features -notcontains "- $entry") { $features += "- $entry" }
+        }
+    }
+}
+
+# Show detected changes
+Write-Host ""
+if ($features.Count -gt 0) {
+    Write-Host "Erkannte Features: $($features.Count)" -ForegroundColor Green
+}
+if ($fixes.Count -gt 0) {
+    Write-Host "Erkannte Fixes: $($fixes.Count)" -ForegroundColor Red
+}
+if ($improvements.Count -gt 0) {
+    Write-Host "Erkannte Verbesserungen: $($improvements.Count)" -ForegroundColor Yellow
 }
 
 # Confirm
@@ -100,8 +210,8 @@ if ($confirm -ne "y" -and $confirm -ne "Y") {
     exit 1
 }
 
-# Step 1: Update package.json version
-Write-Step "Updating package.json version..."
+# Step 1: Update package.json
+Write-Step "Updating package.json..."
 if (-not $DryRun) {
     $packageContent = Get-Content "package.json" -Raw
     $packageContent = $packageContent -replace '"version":\s*"[^"]*"', "`"version`": `"$Version`""
@@ -109,7 +219,7 @@ if (-not $DryRun) {
     Write-Success "package.json updated to $Version"
 }
 
-# Step 2: Update license.txt version
+# Step 2: Update license.txt
 Write-Step "Updating license.txt..."
 if (-not $DryRun) {
     $licenseContent = Get-Content "build/license.txt" -Raw
@@ -118,7 +228,7 @@ if (-not $DryRun) {
     Write-Success "license.txt updated"
 }
 
-# Step 3: Build the project
+# Step 3: Build
 Write-Step "Building project..."
 if (-not $DryRun) {
     npm run build
@@ -134,12 +244,10 @@ if (-not $DryRun) {
     Write-Success "Installer created"
 }
 
-# Step 5: Find installer file
+# Step 5: Find installer
 $installerPath = Get-ChildItem "installer" -Filter "*.exe" | Where-Object { $_.Name -match "Setup" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $installerPath) {
-    throw "Installer file not found!"
-}
-Write-Success "Found installer: $($installerPath.Name)"
+if (-not $installerPath) { throw "Installer not found!" }
+Write-Success "Found: $($installerPath.Name)"
 
 # Step 6: Git commit
 Write-Step "Committing changes..."
@@ -149,14 +257,14 @@ if (-not $DryRun) {
     Write-Success "Changes committed"
 }
 
-# Step 7: Create git tag
+# Step 7: Create tag
 Write-Step "Creating git tag..."
 if (-not $DryRun) {
     git tag -a $tagName -m "BroadcastKit $tagName"
     Write-Success "Tag $tagName created"
 }
 
-# Step 8: Push to GitHub
+# Step 8: Push
 Write-Step "Pushing to GitHub..."
 if (-not $DryRun) {
     git push origin main
@@ -164,121 +272,72 @@ if (-not $DryRun) {
     Write-Success "Pushed to GitHub"
 }
 
-# Step 9: Generate release notes
-Write-Step "Generating release notes..."
+# Step 9: Build release notes
+Write-Step "Building release notes..."
 
-if (-not $ReleaseNotes) {
-    # Get last tag
-    $lastTag = git describe --tags --abbrev=0 HEAD^ 2>$null
-    
-    # Categorize commits
-    $features = @()
-    $fixes = @()
-    $improvements = @()
-    $other = @()
-    
-    if ($lastTag) {
-        $commitLines = git log "$lastTag..HEAD" --pretty=format:"%s" --no-merges
-    } else {
-        $commitLines = git log --pretty=format:"%s" --no-merges -20
-    }
-    
-    foreach ($commit in $commitLines) {
-        if ([string]::IsNullOrWhiteSpace($commit)) { continue }
-        if ($commit -match "^chore: release") { continue }
-        
-        # Clean up commit message
-        $cleanCommit = $commit -replace "^(feat|fix|improve|refactor|style|docs|chore|perf)(\(.+\))?:\s*", ""
-        
-        # Categorize by conventional commit prefixes or keywords
-        if ($commit -match "^feat|add|new|implement|create") {
-            $features += "- $cleanCommit"
-        }
-        elseif ($commit -match "^fix|bugfix|hotfix|repair|resolve") {
-            $fixes += "- $cleanCommit"
-        }
-        elseif ($commit -match "^improve|enhance|update|refactor|optimize|perf") {
-            $improvements += "- $cleanCommit"
-        }
-        else {
-            $other += "- $cleanCommit"
-        }
-    }
-    
-    # Build release notes
-    $notesBuilder = @()
-    $notesBuilder += "# BroadcastKit $tagName"
+$notesBuilder = @()
+$notesBuilder += "# BroadcastKit $tagName"
+$notesBuilder += ""
+$notesBuilder += "Professionelle Stream Overlays fuer OBS Studio"
+$notesBuilder += ""
+
+if ($features.Count -gt 0) {
+    $notesBuilder += "## :sparkles: Neue Features"
     $notesBuilder += ""
-    $notesBuilder += "Professionelle Stream Overlays fuer OBS Studio"
+    $notesBuilder += $features
     $notesBuilder += ""
-    
-    if ($features.Count -gt 0) {
-        $notesBuilder += "## :sparkles: Neue Features"
-        $notesBuilder += ""
-        $notesBuilder += $features
-        $notesBuilder += ""
-    }
-    
-    if ($fixes.Count -gt 0) {
-        $notesBuilder += "## :bug: Bugfixes"
-        $notesBuilder += ""
-        $notesBuilder += $fixes
-        $notesBuilder += ""
-    }
-    
-    if ($improvements.Count -gt 0) {
-        $notesBuilder += "## :wrench: Verbesserungen"
-        $notesBuilder += ""
-        $notesBuilder += $improvements
-        $notesBuilder += ""
-    }
-    
-    if ($other.Count -gt 0 -and ($features.Count -eq 0 -and $fixes.Count -eq 0 -and $improvements.Count -eq 0)) {
-        $notesBuilder += "## :memo: Aenderungen"
-        $notesBuilder += ""
-        $notesBuilder += $other
-        $notesBuilder += ""
-    }
-    
-    # Add feature overview
-    $notesBuilder += "## :package: Enthaltene Features"
-    $notesBuilder += ""
-    $notesBuilder += "- **Lower Third Overlay** - 3 Styles: Clean Pro, Broadcast News, Esports HUD"
-    $notesBuilder += "- **Now Playing Widget** - Automatische Spielerkennung via RAWG API"
-    $notesBuilder += "- **Social Media Widget** - Rotierende Social Links"
-    $notesBuilder += "- **Stream Scenes** - Starting Soon, BRB, Ending, Technical Difficulties (Responsive fuer alle Aufloesungen)"
-    $notesBuilder += "- **OBS Integration** - Auto-Connect und Echtzeit-Steuerung"
-    $notesBuilder += ""
-    
-    # Installation instructions
-    $notesBuilder += "## :cd: Installation"
-    $notesBuilder += ""
-    $notesBuilder += "1. ``BroadcastKit Setup $Version.exe`` herunterladen"
-    $notesBuilder += "2. Installer ausfuehren"
-    $notesBuilder += "3. OBS Studio oeffnen und Browser Sources hinzufuegen:"
-    $notesBuilder += ""
-    $notesBuilder += "| Overlay | URL |"
-    $notesBuilder += "|---------|-----|"
-    $notesBuilder += "| Lower Third | ``http://localhost:3000/overlay/lower-third`` |"
-    $notesBuilder += "| Now Playing | ``http://localhost:3000/overlay/now-playing`` |"
-    $notesBuilder += "| Social Widget | ``http://localhost:3000/overlay/social-widget`` |"
-    $notesBuilder += "| Starting Soon | ``http://localhost:3000/overlay/scene-starting`` |"
-    $notesBuilder += "| Be Right Back | ``http://localhost:3000/overlay/scene-brb`` |"
-    $notesBuilder += "| Stream Ending | ``http://localhost:3000/overlay/scene-ending`` |"
-    $notesBuilder += "| Tech. Difficulties | ``http://localhost:3000/overlay/scene-technical`` |"
-    $notesBuilder += ""
-    
-    # System requirements
-    $notesBuilder += "## :computer: Systemanforderungen"
-    $notesBuilder += ""
-    $notesBuilder += "- Windows 10/11 64-bit"
-    $notesBuilder += "- OBS Studio mit WebSocket Plugin (v5.x)"
-    $notesBuilder += "- Internetverbindung fuer Spielerkennung (RAWG API)"
-    
-    $ReleaseNotes = $notesBuilder -join "`n"
 }
 
-# Preview release notes in dry run
+if ($fixes.Count -gt 0) {
+    $notesBuilder += "## :bug: Bugfixes"
+    $notesBuilder += ""
+    $notesBuilder += $fixes
+    $notesBuilder += ""
+}
+
+if ($improvements.Count -gt 0) {
+    $notesBuilder += "## :wrench: Verbesserungen"
+    $notesBuilder += ""
+    $notesBuilder += $improvements
+    $notesBuilder += ""
+}
+
+# Always include feature overview
+$notesBuilder += "## :package: Alle Features"
+$notesBuilder += ""
+$notesBuilder += "- **Lower Third Overlay** - 3 Styles: Clean Pro, Broadcast News, Esports HUD"
+$notesBuilder += "- **Now Playing Widget** - Automatische Spielerkennung via RAWG API"
+$notesBuilder += "- **Social Media Widget** - Rotierende Social Links"
+$notesBuilder += "- **Stream Scenes** - Starting Soon, BRB, Ending, Technical Difficulties"
+$notesBuilder += "- **OBS Integration** - Auto-Connect und Echtzeit-Steuerung"
+$notesBuilder += ""
+
+# Installation
+$notesBuilder += "## :cd: Installation"
+$notesBuilder += ""
+$notesBuilder += "1. ``BroadcastKit Setup $Version.exe`` herunterladen"
+$notesBuilder += "2. Installer ausfuehren"
+$notesBuilder += "3. Browser Sources in OBS hinzufuegen"
+$notesBuilder += ""
+$notesBuilder += "| Overlay | URL |"
+$notesBuilder += "|---------|-----|"
+$notesBuilder += "| Lower Third | ``http://localhost:3000/overlay/lower-third`` |"
+$notesBuilder += "| Now Playing | ``http://localhost:3000/overlay/now-playing`` |"
+$notesBuilder += "| Social Widget | ``http://localhost:3000/overlay/social-widget`` |"
+$notesBuilder += "| Starting Soon | ``http://localhost:3000/overlay/scene-starting`` |"
+$notesBuilder += "| Be Right Back | ``http://localhost:3000/overlay/scene-brb`` |"
+$notesBuilder += "| Stream Ending | ``http://localhost:3000/overlay/scene-ending`` |"
+$notesBuilder += "| Tech. Difficulties | ``http://localhost:3000/overlay/scene-technical`` |"
+$notesBuilder += ""
+
+$notesBuilder += "## :computer: Systemanforderungen"
+$notesBuilder += ""
+$notesBuilder += "- Windows 10/11 64-bit"
+$notesBuilder += "- OBS Studio mit WebSocket Plugin (v5.x)"
+
+$ReleaseNotes = $notesBuilder -join "`n"
+
+# Preview in dry run
 if ($DryRun) {
     Write-Host "`n--- RELEASE NOTES PREVIEW ---" -ForegroundColor Yellow
     Write-Host $ReleaseNotes
@@ -293,9 +352,7 @@ if (-not $DryRun) {
     $ReleaseNotes | Out-File -FilePath $releaseNotesFile -Encoding UTF8
     
     $prereleaseArg = ""
-    if ($isPrerelease) {
-        $prereleaseArg = "--prerelease"
-    }
+    if ($isPrerelease) { $prereleaseArg = "--prerelease" }
     
     gh release create $tagName --title "BroadcastKit $tagName" --notes-file "$releaseNotesFile" $prereleaseArg "$($installerPath.FullName)"
     
