@@ -127,8 +127,8 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
-      {/* Sidebar Navigation - Fixed width, no animation */}
-      <div className="lg:w-64 flex-shrink-0">
+      {/* Sidebar Navigation - Fixed width */}
+      <div className="w-full lg:w-64 lg:min-w-[256px] lg:max-w-[256px] flex-shrink-0">
         <div className="card p-2 lg:p-3 lg:sticky lg:top-4">
           <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
             {tabs.map((tab) => (
@@ -153,45 +153,45 @@ function Dashboard() {
         </div>
 
         {/* Browser Source URLs - Desktop Only */}
-        <div className="card mt-4 hidden lg:block lg:sticky lg:top-48">
+        <div className="card mt-4 hidden lg:block lg:sticky lg:top-48 overflow-hidden">
           <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Browser Sources</h4>
           <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-accent-purple"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-accent-purple flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/lower-third</code>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-accent-green"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-accent-green flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/now-playing</code>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-pink-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/social-widget</code>
             </div>
           </div>
           <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">Stream Scenes</h4>
           <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/scene-starting</code>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/scene-brb</code>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/scene-ending</code>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/scene-technical</code>
             </div>
           </div>
           <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">Reaction</h4>
           <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg overflow-hidden">
+              <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
               <code className="text-gray-300 truncate">:3000/overlay/reaction</code>
             </div>
           </div>
