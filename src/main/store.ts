@@ -72,11 +72,36 @@ interface StreamScenesConfig {
   globalStyle: 'minimal' | 'gaming' | 'elegant';
 }
 
+// Reaction Overlays für Video-Reactions
+interface ReactionSource {
+  id: string;
+  name: string;
+  channelName: string;
+  channelAvatar: string;  // URL oder Base64
+  videoTitle: string;
+  videoThumbnail: string; // URL oder Base64
+  platform: 'youtube' | 'twitch' | 'tiktok' | 'twitter';
+}
+
+interface ReactionConfig {
+  sources: ReactionSource[];
+  activeSourceId: string;
+  style: 'clean' | 'broadcast' | 'esports';
+  displayDuration: number;        // Sekunden (0 = dauerhaft)
+  repeatEnabled: boolean;         // Wiederholung aktiviert
+  repeatInterval: number;         // Wiederholungsintervall in Sekunden
+  repeatCount: number;            // Anzahl Wiederholungen (0 = unendlich)
+  showChannelInfo: boolean;
+  showVideoTitle: boolean;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}
+
 interface OverlayConfig {
   lowerThird: LowerThirdConfig;
   nowPlaying: NowPlayingConfig;
   socialWidget: SocialWidgetConfig;
   streamScenes: StreamScenesConfig;
+  reaction: ReactionConfig;
 }
 
 interface AppConfig {
@@ -187,6 +212,18 @@ const defaultConfig: AppConfig = {
       },
       globalStyle: 'gaming',
     },
+    reaction: {
+      sources: [],
+      activeSourceId: '',
+      style: 'clean',
+      displayDuration: 0,       // 0 = dauerhaft bis manuell ausgeblendet
+      repeatEnabled: false,     // Wiederholung deaktiviert
+      repeatInterval: 60,       // Alle 60 Sekunden wiederholen
+      repeatCount: 0,           // 0 = unendlich
+      showChannelInfo: true,
+      showVideoTitle: true,
+      position: 'top-right',
+    },
   },
 };
 
@@ -270,6 +307,36 @@ class ConfigStore {
     this.store.set(`overlays.streamScenes.scenes.${sceneId}`, { ...currentScene, ...scene });
   }
 
+  // Reaction Settings
+  getReactionConfig(): ReactionConfig {
+    return this.getOverlayConfig().reaction;
+  }
+
+  setReactionConfig(config: Partial<ReactionConfig>): void {
+    const current = this.getReactionConfig() || {};
+    this.store.set('overlays.reaction', { ...current, ...config });
+  }
+
+  addReactionSource(source: ReactionSource): void {
+    const current = this.getReactionConfig();
+    const sources = current.sources || [];
+    this.store.set('overlays.reaction.sources', [...sources, source]);
+  }
+
+  updateReactionSource(sourceId: string, updates: Partial<ReactionSource>): void {
+    const current = this.getReactionConfig();
+    const sources = (current.sources || []).map(s => 
+      s.id === sourceId ? { ...s, ...updates } : s
+    );
+    this.store.set('overlays.reaction.sources', sources);
+  }
+
+  removeReactionSource(sourceId: string): void {
+    const current = this.getReactionConfig();
+    const sources = (current.sources || []).filter(s => s.id !== sourceId);
+    this.store.set('overlays.reaction.sources', sources);
+  }
+
   // Full Config
   getAll(): AppConfig {
     return this.store.store;
@@ -277,4 +344,4 @@ class ConfigStore {
 }
 
 export const configStore = new ConfigStore();
-export type { ObsConfig, OverlayConfig, AppConfig, LowerThirdConfig, NowPlayingConfig, RawgConfig, SocialWidgetConfig, SocialLink, StreamScenesConfig, StreamScene };
+export type { ObsConfig, OverlayConfig, AppConfig, LowerThirdConfig, NowPlayingConfig, RawgConfig, SocialWidgetConfig, SocialLink, StreamScenesConfig, StreamScene, ReactionConfig, ReactionSource };

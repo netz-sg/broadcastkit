@@ -161,6 +161,27 @@ ipcMain.handle('save-stream-scene', (event, sceneId, scene) => {
   return { success: true };
 });
 
+// Reaction Overlay handlers
+ipcMain.handle('save-reaction-settings', (event, settings) => {
+  configStore.setReactionConfig(settings);
+  return { success: true };
+});
+
+ipcMain.handle('add-reaction-source', (event, source) => {
+  configStore.addReactionSource(source);
+  return { success: true };
+});
+
+ipcMain.handle('update-reaction-source', (event, updates) => {
+  configStore.updateReactionSource(updates.id, updates);
+  return { success: true };
+});
+
+ipcMain.handle('remove-reaction-source', (event, sourceId) => {
+  configStore.removeReactionSource(sourceId);
+  return { success: true };
+});
+
 ipcMain.handle('save-rawg-settings', (event, settings) => {
   configStore.setRawgConfig(settings);
   return { success: true };

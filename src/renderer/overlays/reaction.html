@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .font-tech { font-family: 'Rajdhani', sans-serif; }
+
+    /* ==================== ANIMATIONS ==================== */
+    @keyframes slideInLeft {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutLeft {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-100%); opacity: 0; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes scaleOut {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(0.8); opacity: 0; }
+    }
+    @keyframes pulseRing {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) skewX(-12deg); }
+      100% { transform: translateX(200%) skewX(-12deg); }
+    }
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ==================== LAYOUT CONTAINERS ==================== */
+    .badge-container {
+      position: absolute;
+      bottom: 80px;
+      left: 80px;
+      pointer-events: none;
+    }
+    .banner-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .pip-container {
+      position: absolute;
+      top: 60px;
+      right: 60px;
+      pointer-events: none;
+    }
+
+    /* ====================================================================
+       BADGE LAYOUT - Compact badge in corner
+       ==================================================================== */
+    
+    /* --- Badge: Clean Style --- */
+    .badge-clean {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 32px 12px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(24px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .badge-clean.visible {
+      display: flex;
+      animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .badge-clean.hiding {
+      animation: slideOutLeft 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .badge-clean .avatar-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .badge-clean .avatar-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.3);
+      animation: pulseRing 2s infinite;
+    }
+    .badge-clean .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .badge-clean .live-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 14px;
+      height: 14px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 2px solid black;
+      z-index: 2;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+      animation: livePulse 1.5s infinite;
+    }
+    .badge-clean .content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .badge-clean .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .badge-clean .channel-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+    .badge-clean .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+    .badge-clean .badge-tag svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* --- Badge: Broadcast Style --- */
+    .badge-broadcast {
+      display: none;
+      flex-direction: column;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+    }
+    .badge-broadcast.visible {
+      display: flex;
+      animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .badge-broadcast.hiding {
+      animation: slideOutLeft 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .badge-broadcast .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .badge-broadcast .tag {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 8px 16px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .badge-broadcast .tag::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .badge-broadcast .tag-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-broadcast .tag-icon svg {
+      width: 12px;
+      height: 12px;
+      animation: livePulse 1s infinite;
+    }
+    .badge-broadcast .accent {
+      width: 40px;
+      height: 32px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
+    }
+    .badge-broadcast .main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(0,0,0,0.7));
+      padding: 16px 32px 16px 16px;
+      border-left: 3px solid #ef4444;
+    }
+    .badge-broadcast .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: linear-gradient(135deg, #374151, #1f2937);
+      flex-shrink: 0;
+    }
+    .badge-broadcast .info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .badge-broadcast .channel-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+    }
+    .badge-broadcast .category {
+      font-size: 12px;
+      font-weight: 500;
+      color: #9ca3af;
+    }
+
+    /* --- Badge: Esports Style --- */
+    .badge-esports {
+      display: none;
+      align-items: stretch;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.6));
+    }
+    .badge-esports.visible {
+      display: flex;
+      animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .badge-esports.hiding {
+      animation: slideOutLeft 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .badge-esports .side-bar {
+      width: 6px;
+      background: linear-gradient(180deg, #ef4444, #f97316);
+      transform: skewX(-8deg);
+      margin-right: -3px;
+    }
+    .badge-esports .main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: linear-gradient(135deg, rgba(15,15,15,0.95), rgba(25,25,25,0.95));
+      padding: 14px 28px 14px 18px;
+      transform: skewX(-8deg);
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .badge-esports .main::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, #ef4444, #f97316, transparent);
+    }
+    .badge-esports .inner {
+      transform: skewX(8deg);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .badge-esports .avatar {
+      width: 48px;
+      height: 48px;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+      object-fit: cover;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      flex-shrink: 0;
+    }
+    .badge-esports .info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .badge-esports .tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-esports .tag svg {
+      width: 10px;
+      height: 10px;
+      animation: livePulse 1s infinite;
+    }
+    .badge-esports .channel-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.1;
+    }
+
+    /* ====================================================================
+       BANNER LAYOUT - Full width at top
+       ==================================================================== */
+    
+    /* --- Banner: Clean Style --- */
+    .banner-clean {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      margin: 40px auto 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .banner-clean.visible {
+      display: block;
+      animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .banner-clean.hiding {
+      animation: slideUp 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .banner-clean .inner {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 20px 32px;
+    }
+    .banner-clean .thumbnail-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .banner-clean .thumbnail {
+      width: 180px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1f2937, #111827);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .banner-clean .live-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .banner-clean .live-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      animation: livePulse 1s infinite;
+    }
+    .banner-clean .content {
+      flex: 1;
+      min-width: 0;
+    }
+    .banner-clean .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .banner-clean .title {
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .banner-clean .meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .banner-clean .channel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner-clean .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .banner-clean .channel-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .banner-clean .divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+    }
+    .banner-clean .category {
+      font-size: 13px;
+      color: #9ca3af;
+      background: rgba(255,255,255,0.05);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* --- Banner: Broadcast Style --- */
+    .banner-broadcast {
+      display: none;
+      width: 100%;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.6));
+    }
+    .banner-broadcast.visible {
+      display: block;
+      animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .banner-broadcast.hiding {
+      animation: slideUp 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .banner-broadcast .bar {
+      height: 4px;
+      background: linear-gradient(90deg, #ef4444, #f97316, #ef4444);
+      background-size: 200% 100%;
+      animation: gradientFlow 3s linear infinite;
+    }
+    .banner-broadcast .inner {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(0,0,0,0.85));
+      padding: 16px 40px;
+      gap: 24px;
+    }
+    .banner-broadcast .tag-wrapper {
+      flex-shrink: 0;
+    }
+    .banner-broadcast .tag {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 10px 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner-broadcast .tag::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .banner-broadcast .tag-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner-broadcast .tag-inner svg {
+      width: 12px;
+      height: 12px;
+      animation: livePulse 1s infinite;
+    }
+    .banner-broadcast .thumbnail {
+      width: 120px;
+      height: 68px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+      background: #1f2937;
+    }
+    .banner-broadcast .content {
+      flex: 1;
+      min-width: 0;
+    }
+    .banner-broadcast .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .banner-broadcast .meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .banner-broadcast .channel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .banner-broadcast .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .banner-broadcast .dot {
+      width: 4px;
+      height: 4px;
+      background: #6b7280;
+      border-radius: 50%;
+    }
+
+    /* --- Banner: Esports Style --- */
+    .banner-esports {
+      display: none;
+      width: 100%;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.7));
+    }
+    .banner-esports.visible {
+      display: block;
+      animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .banner-esports.hiding {
+      animation: slideUp 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .banner-esports .wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+    .banner-esports .bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15,15,15,0.98), rgba(25,25,25,0.95));
+    }
+    .banner-esports .scanline {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    .banner-esports .glow {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ef4444, #f97316, #ef4444, transparent);
+    }
+    .banner-esports .inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      padding: 20px 48px;
+      gap: 32px;
+    }
+    .banner-esports .tag-section {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .banner-esports .side-bar {
+      width: 4px;
+      height: 60px;
+      background: linear-gradient(180deg, #ef4444, #f97316);
+      transform: skewX(-12deg);
+    }
+    .banner-esports .tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner-esports .tag svg {
+      width: 12px;
+      height: 12px;
+      animation: livePulse 1s infinite;
+    }
+    .banner-esports .thumbnail-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .banner-esports .thumbnail {
+      width: 140px;
+      height: 78px;
+      object-fit: cover;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+      background: linear-gradient(135deg, #1f2937, #111827);
+    }
+    .banner-esports .thumbnail-frame {
+      position: absolute;
+      inset: -2px;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      z-index: -1;
+    }
+    .banner-esports .content {
+      flex: 1;
+      min-width: 0;
+    }
+    .banner-esports .title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .banner-esports .meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .banner-esports .channel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner-esports .avatar {
+      width: 28px;
+      height: 28px;
+      clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+      object-fit: cover;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+    }
+    .banner-esports .channel-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #e5e7eb;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .banner-esports .divider {
+      width: 2px;
+      height: 16px;
+      background: linear-gradient(180deg, #ef4444, #f97316);
+      transform: skewX(-12deg);
+    }
+    .banner-esports .category {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ====================================================================
+       PIP LAYOUT - Picture-in-Picture card
+       ==================================================================== */
+    
+    /* --- PiP: Clean Style --- */
+    .pip-clean {
+      display: none;
+      flex-direction: column;
+      width: 400px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(24px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .pip-clean.visible {
+      display: flex;
+      animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pip-clean.hiding {
+      animation: scaleOut 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .pip-clean .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .pip-clean .label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .pip-clean .label-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: livePulse 1s infinite;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+    }
+    .pip-clean .badge {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pip-clean .video-frame {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #1f2937, #111827);
+      border-bottom: 3px solid #ef4444;
+    }
+    .pip-clean .thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .pip-clean .video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pip-clean .video-placeholder svg {
+      width: 48px;
+      height: 48px;
+      color: rgba(255, 255, 255, 0.3);
+    }
+    .pip-clean .info {
+      padding: 16px 20px;
+    }
+    .pip-clean .title {
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .pip-clean .channel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pip-clean .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .pip-clean .channel-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pip-clean .channel-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .pip-clean .category {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    /* --- PiP: Broadcast Style --- */
+    .pip-broadcast {
+      display: none;
+      flex-direction: column;
+      width: 420px;
+      filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.6));
+    }
+    .pip-broadcast.visible {
+      display: flex;
+      animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pip-broadcast.hiding {
+      animation: slideOutRight 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .pip-broadcast .header {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+      position: relative;
+      overflow: hidden;
+    }
+    .pip-broadcast .header::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .pip-broadcast .header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 800;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+    }
+    .pip-broadcast .header-content svg {
+      width: 12px;
+      height: 12px;
+      animation: livePulse 1s infinite;
+    }
+    .pip-broadcast .header-accent {
+      flex: 1;
+      height: 100%;
+      min-height: 40px;
+      background: linear-gradient(90deg, #dc2626, transparent);
+      clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .pip-broadcast .video-frame {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      border-left: 4px solid #ef4444;
+      border-right: 4px solid #ef4444;
+    }
+    .pip-broadcast .thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .pip-broadcast .video-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.8));
+      pointer-events: none;
+    }
+    .pip-broadcast .info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.95), rgba(0,0,0,0.85));
+      border-left: 4px solid #ef4444;
+      border-right: 4px solid #ef4444;
+      border-bottom: 4px solid #ef4444;
+    }
+    .pip-broadcast .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, #374151, #1f2937);
+      flex-shrink: 0;
+    }
+    .pip-broadcast .text {
+      flex: 1;
+      min-width: 0;
+    }
+    .pip-broadcast .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pip-broadcast .meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .pip-broadcast .channel-name {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .pip-broadcast .dot {
+      width: 3px;
+      height: 3px;
+      background: #6b7280;
+      border-radius: 50%;
+    }
+    .pip-broadcast .category {
+      color: #9ca3af;
+    }
+
+    /* --- PiP: Esports Style --- */
+    .pip-esports {
+      display: none;
+      flex-direction: column;
+      width: 440px;
+      filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.7));
+    }
+    .pip-esports.visible {
+      display: flex;
+      animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pip-esports.hiding {
+      animation: slideOutRight 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .pip-esports .frame {
+      position: relative;
+      background: linear-gradient(135deg, rgba(15,15,15,0.98), rgba(20,20,20,0.95));
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+      padding: 3px;
+    }
+    .pip-esports .frame::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+      z-index: -1;
+    }
+    .pip-esports .inner {
+      background: linear-gradient(135deg, rgba(15,15,15,0.98), rgba(20,20,20,0.95));
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    }
+    .pip-esports .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .pip-esports .label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pip-esports .label svg {
+      width: 10px;
+      height: 10px;
+      animation: livePulse 1s infinite;
+    }
+    .pip-esports .corner {
+      width: 20px;
+      height: 20px;
+      border-right: 2px solid #ef4444;
+      border-top: 2px solid #ef4444;
+    }
+    .pip-esports .video-frame {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: #0a0a0a;
+    }
+    .pip-esports .thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .pip-esports .scanlines {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+    .pip-esports .glow-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ef4444, #f97316, #ef4444, transparent);
+    }
+    .pip-esports .info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+    }
+    .pip-esports .avatar {
+      width: 48px;
+      height: 48px;
+      clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+      object-fit: cover;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      flex-shrink: 0;
+    }
+    .pip-esports .text {
+      flex: 1;
+      min-width: 0;
+    }
+    .pip-esports .title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pip-esports .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pip-esports .channel-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e5e7eb;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .pip-esports .divider {
+      width: 2px;
+      height: 12px;
+      background: linear-gradient(180deg, #ef4444, #f97316);
+      transform: skewX(-12deg);
+    }
+    .pip-esports .category {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ==================== BADGE LAYOUT ==================== -->
+  <div class="badge-container">
+    <!-- Badge: Clean -->
+    <div id="badge-clean" class="badge-clean">
+      <div class="avatar-wrapper">
+        <img class="avatar" data-field="avatar" src="" alt="">
+        <div class="live-dot"></div>
+      </div>
+      <div class="content">
+        <span class="label">Watching</span>
+        <span class="channel-name" data-field="channel">Channel Name</span>
+        <span class="badge-tag">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path fill-rule="evenodd" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-2 0a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Reaction
+        </span>
+      </div>
+    </div>
+
+    <!-- Badge: Broadcast -->
+    <div id="badge-broadcast" class="badge-broadcast">
+      <div class="top-bar">
+        <div class="tag">
+          <span class="tag-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+            Watching Now
+          </span>
+        </div>
+        <div class="accent"></div>
+      </div>
+      <div class="main">
+        <img class="avatar" data-field="avatar" src="" alt="">
+        <div class="info">
+          <span class="channel-name" data-field="channel">Channel Name</span>
+          <span class="category" data-field="category">Category</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badge: Esports -->
+    <div id="badge-esports" class="badge-esports">
+      <div class="side-bar"></div>
+      <div class="main">
+        <div class="inner">
+          <img class="avatar" data-field="avatar" src="" alt="">
+          <div class="info">
+            <span class="tag">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+              Reaction
+            </span>
+            <span class="channel-name" data-field="channel">Channel Name</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BANNER LAYOUT ==================== -->
+  <div class="banner-container">
+    <!-- Banner: Clean -->
+    <div id="banner-clean" class="banner-clean">
+      <div class="inner">
+        <div class="thumbnail-wrapper">
+          <img class="thumbnail" data-field="thumbnail" src="" alt="">
+          <div class="live-badge">Watching</div>
+        </div>
+        <div class="content">
+          <div class="label">Video Reaction</div>
+          <div class="title" data-field="title">Video Title Goes Here</div>
+          <div class="meta">
+            <div class="channel">
+              <img class="avatar" data-field="avatar" src="" alt="">
+              <span class="channel-name" data-field="channel">Channel Name</span>
+            </div>
+            <div class="divider"></div>
+            <span class="category" data-field="category">Category</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner: Broadcast -->
+    <div id="banner-broadcast" class="banner-broadcast">
+      <div class="bar"></div>
+      <div class="inner">
+        <div class="tag-wrapper">
+          <div class="tag">
+            <span class="tag-inner">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+              Reaction
+            </span>
+          </div>
+        </div>
+        <img class="thumbnail" data-field="thumbnail" src="" alt="">
+        <div class="content">
+          <div class="title" data-field="title">Video Title Goes Here</div>
+          <div class="meta">
+            <div class="channel">
+              <img class="avatar" data-field="avatar" src="" alt="">
+              <span data-field="channel">Channel Name</span>
+            </div>
+            <div class="dot"></div>
+            <span data-field="category">Category</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner: Esports -->
+    <div id="banner-esports" class="banner-esports">
+      <div class="wrapper">
+        <div class="bg"></div>
+        <div class="scanline"></div>
+        <div class="glow"></div>
+        <div class="inner">
+          <div class="tag-section">
+            <div class="side-bar"></div>
+            <div class="tag">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+              Reaction
+            </div>
+          </div>
+          <div class="thumbnail-wrapper">
+            <div class="thumbnail-frame"></div>
+            <img class="thumbnail" data-field="thumbnail" src="" alt="">
+          </div>
+          <div class="content">
+            <div class="title" data-field="title">Video Title Goes Here</div>
+            <div class="meta">
+              <div class="channel">
+                <img class="avatar" data-field="avatar" src="" alt="">
+                <span class="channel-name" data-field="channel">Channel Name</span>
+              </div>
+              <div class="divider"></div>
+              <span class="category" data-field="category">Category</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PIP LAYOUT ==================== -->
+  <div class="pip-container">
+    <!-- PiP: Clean -->
+    <div id="pip-clean" class="pip-clean">
+      <div class="header">
+        <div class="label">
+          <span class="label-dot"></span>
+          Watching Now
+        </div>
+        <span class="badge">Reaction</span>
+      </div>
+      <div class="video-frame">
+        <img class="thumbnail" data-field="thumbnail" src="" alt="">
+        <div class="video-placeholder">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <div class="info">
+        <div class="title" data-field="title">Video Title Goes Here</div>
+        <div class="channel">
+          <img class="avatar" data-field="avatar" src="" alt="">
+          <div class="channel-info">
+            <span class="channel-name" data-field="channel">Channel Name</span>
+            <span class="category" data-field="category">Category</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PiP: Broadcast -->
+    <div id="pip-broadcast" class="pip-broadcast">
+      <div class="header">
+        <div class="header-content">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+          Watching Now
+        </div>
+        <div class="header-accent"></div>
+      </div>
+      <div class="video-frame">
+        <img class="thumbnail" data-field="thumbnail" src="" alt="">
+        <div class="video-overlay"></div>
+      </div>
+      <div class="info">
+        <img class="avatar" data-field="avatar" src="" alt="">
+        <div class="text">
+          <div class="title" data-field="title">Video Title Goes Here</div>
+          <div class="meta">
+            <span class="channel-name" data-field="channel">Channel Name</span>
+            <span class="dot"></span>
+            <span class="category" data-field="category">Category</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PiP: Esports -->
+    <div id="pip-esports" class="pip-esports">
+      <div class="frame">
+        <div class="inner">
+          <div class="header">
+            <div class="label">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+              Reaction
+            </div>
+            <div class="corner"></div>
+          </div>
+          <div class="video-frame">
+            <img class="thumbnail" data-field="thumbnail" src="" alt="">
+            <div class="scanlines"></div>
+            <div class="glow-line"></div>
+          </div>
+          <div class="info">
+            <img class="avatar" data-field="avatar" src="" alt="">
+            <div class="text">
+              <div class="title" data-field="title">Video Title Goes Here</div>
+              <div class="meta">
+                <span class="channel-name" data-field="channel">Channel Name</span>
+                <div class="divider"></div>
+                <span class="category" data-field="category">Category</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentElement = null;
+    let hideTimeout = null;
+
+    // All overlay elements mapped by layout-style
+    const overlays = {
+      'badge-clean': document.getElementById('badge-clean'),
+      'badge-broadcast': document.getElementById('badge-broadcast'),
+      'badge-esports': document.getElementById('badge-esports'),
+      'banner-clean': document.getElementById('banner-clean'),
+      'banner-broadcast': document.getElementById('banner-broadcast'),
+      'banner-esports': document.getElementById('banner-esports'),
+      'pip-clean': document.getElementById('pip-clean'),
+      'pip-broadcast': document.getElementById('pip-broadcast'),
+      'pip-esports': document.getElementById('pip-esports'),
+    };
+
+    function hideAll() {
+      Object.values(overlays).forEach(el => {
+        el.classList.remove('visible');
+        el.classList.remove('hiding');
+      });
+    }
+
+    function updateContent(element, data) {
+      // Update all data fields within the element
+      const channel = data.channel || data.channelName || 'Unknown Channel';
+      const avatar = data.avatar || data.channelAvatar || '';
+      const title = data.title || data.videoTitle || 'Video Reaction';
+      const thumbnail = data.thumbnail || data.videoThumbnail || '';
+      const category = data.category || 'Entertainment';
+
+      console.log('Updating content:', { channel, avatar, title, thumbnail });
+
+      element.querySelectorAll('[data-field="channel"]').forEach(el => el.textContent = channel);
+      element.querySelectorAll('[data-field="title"]').forEach(el => el.textContent = title);
+      element.querySelectorAll('[data-field="category"]').forEach(el => el.textContent = category);
+      element.querySelectorAll('[data-field="avatar"]').forEach(el => {
+        if (avatar) {
+          el.src = avatar;
+          el.style.display = 'block';
+        }
+      });
+      element.querySelectorAll('[data-field="thumbnail"]').forEach(el => {
+        if (thumbnail) {
+          el.src = thumbnail;
+          el.style.display = 'block';
+        }
+        // Hide placeholder if we have a thumbnail
+        const placeholder = element.querySelector('.video-placeholder');
+        if (placeholder) {
+          placeholder.style.display = thumbnail ? 'none' : 'flex';
+        }
+      });
+    }
+
+    function showOverlay(data) {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+
+      // Layout: 'badge', 'banner', 'pip'
+      // Style: 'clean', 'broadcast', 'esports'
+      const layout = data.layout || 'badge';
+      const style = data.style || 'clean';
+      const key = `${layout}-${style}`;
+
+      hideAll();
+
+      const element = overlays[key];
+      if (!element) {
+        console.warn('Unknown overlay:', key);
+        return;
+      }
+
+      currentElement = element;
+      updateContent(element, data);
+
+      setTimeout(() => {
+        element.classList.add('visible');
+      }, 50);
+
+      if (data.displayDuration && data.displayDuration > 0) {
+        hideTimeout = setTimeout(() => hideOverlay(), data.displayDuration * 1000);
+      }
+    }
+
+    function hideOverlay() {
+      if (currentElement) {
+        currentElement.classList.remove('visible');
+        currentElement.classList.add('hiding');
+        const el = currentElement;
+        setTimeout(() => {
+          el.classList.remove('hiding');
+        }, 500);
+        currentElement = null;
+      }
+    }
+
+    socket.on('overlay-event', (data) => {
+      if (data.module === 'REACTION') {
+        if (data.action === 'SHOW') {
+          showOverlay(data.payload);
+        } else if (data.action === 'HIDE') {
+          hideOverlay();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -100,6 +100,13 @@ export class ExpressServer {
       res.sendFile(overlayPath);
     });
 
+    // Reaction Overlay route (all layouts in one overlay)
+    this.app.get('/overlay/reaction', (req, res) => {
+      const overlayPath = path.join(this.getOverlaysPath(), 'reaction.html');
+      console.log('[Server] Serving Reaction overlay from:', overlayPath);
+      res.sendFile(overlayPath);
+    });
+
     // Socket.io client for overlays
     this.app.get('/socket.io/socket.io.js', (req, res) => {
       res.sendFile(path.join(__dirname, '../../node_modules/socket.io/client-dist/socket.io.js'));

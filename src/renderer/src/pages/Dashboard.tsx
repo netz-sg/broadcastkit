@@ -4,10 +4,11 @@ import LowerThirdControl from '../components/LowerThirdControl';
 import NowPlayingControl from '../components/NowPlayingControl';
 import SocialWidgetControl from '../components/SocialWidgetControl';
 import StreamScenesControl from '../components/StreamScenesControl';
+import ReactionControl from '../components/ReactionControl';
 
 const { ipcRenderer } = window.require('electron');
 
-type TabType = 'overview' | 'lower-third' | 'now-playing' | 'social' | 'stream-scenes';
+type TabType = 'overview' | 'lower-third' | 'now-playing' | 'social' | 'stream-scenes' | 'reaction';
 
 interface TabInfo {
   id: TabType;
@@ -73,6 +74,17 @@ const tabs: TabInfo[] = [
     ),
     color: 'amber-500',
     description: 'Fullscreen Szenen'
+  },
+  {
+    id: 'reaction',
+    label: 'Reaction',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    ),
+    color: 'red-500',
+    description: 'Video Reactions'
   }
 ];
 
@@ -106,6 +118,8 @@ function Dashboard() {
         return <SocialWidgetControl config={config} fullWidth />;
       case 'stream-scenes':
         return <StreamScenesControl config={config} fullWidth />;
+      case 'reaction':
+        return <ReactionControl config={config} fullWidth />;
       default:
         return null;
     }
@@ -172,6 +186,13 @@ function Dashboard() {
             <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
               <div className="w-2 h-2 rounded-full bg-amber-500"></div>
               <code className="text-gray-300 truncate">:3000/overlay/scene-technical</code>
+            </div>
+          </div>
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">Reaction</h4>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center gap-2 p-2 bg-dark-hover rounded-lg">
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <code className="text-gray-300 truncate">:3000/overlay/reaction</code>
             </div>
           </div>
         </div>
@@ -333,23 +354,52 @@ function OverviewTab({ config, onNavigate }: OverviewTabProps) {
             <span className="px-2 py-1 bg-amber-600/30 rounded text-xs text-amber-400">Ending</span>
           </div>
         </motion.button>
+
+        {/* Reaction Card */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          onClick={() => onNavigate('reaction')}
+          className="card group hover:border-red-500/50 transition-all duration-300 text-left"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-bold text-white">Reaction</h3>
+              <p className="text-xs text-gray-500">3 Overlay-Typen</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-400 mb-3">
+            Zeige auf welches Video du reagierst mit Badge, Banner oder PiP.
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            <span className="px-2 py-1 bg-red-600/30 rounded text-xs text-red-400">Badge</span>
+            <span className="px-2 py-1 bg-red-600/30 rounded text-xs text-red-400">Banner</span>
+            <span className="px-2 py-1 bg-red-600/30 rounded text-xs text-red-400">PiP</span>
+          </div>
+        </motion.button>
       </div>
 
       {/* Quick Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.6 }}
         className="card"
       >
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick Info</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-dark-hover rounded-lg">
-            <div className="text-2xl font-bold text-accent-blue">4</div>
+            <div className="text-2xl font-bold text-accent-blue">5</div>
             <div className="text-xs text-gray-500">Overlays</div>
           </div>
           <div className="text-center p-3 bg-dark-hover rounded-lg">
-            <div className="text-2xl font-bold text-accent-purple">11</div>
+            <div className="text-2xl font-bold text-accent-purple">14</div>
             <div className="text-xs text-gray-500">Styles</div>
           </div>
           <div className="text-center p-3 bg-dark-hover rounded-lg">
@@ -357,8 +407,8 @@ function OverviewTab({ config, onNavigate }: OverviewTabProps) {
             <div className="text-xs text-gray-500">Stream Scenes</div>
           </div>
           <div className="text-center p-3 bg-dark-hover rounded-lg">
-            <div className="text-2xl font-bold text-pink-500">6</div>
-            <div className="text-xs text-gray-500">Social Platforms</div>
+            <div className="text-2xl font-bold text-red-500">3</div>
+            <div className="text-xs text-gray-500">Reaction Types</div>
           </div>
         </div>
       </motion.div>

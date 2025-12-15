@@ -305,14 +305,30 @@ function Do-Release($type) {
 - OBS Studio mit WebSocket Plugin (v5.x)
 "@
     
-    # GitHub Release
+    # GitHub Release - Upload ALL required files for auto-update
     Write-Step "Erstelle GitHub Release..."
     $notesFile = "installer\release-notes.md"
     $releaseNotes | Out-File -FilePath $notesFile -Encoding utf8
     
-    gh release create $tagName "$installerPath" --title "BroadcastKit $tagName" --notes-file "$notesFile"
+    # Files needed for auto-update
+    $blockmapPath = "installer\$installerName.blockmap"
+    $latestYmlPath = "installer\latest.yml"
+    
+    # Build the upload command with all files
+    $uploadFiles = "`"$installerPath`""
+    if (Test-Path $blockmapPath) {
+        $uploadFiles += " `"$blockmapPath`""
+        Write-Host "    + $installerName.blockmap" -ForegroundColor DarkGray
+    }
+    if (Test-Path $latestYmlPath) {
+        $uploadFiles += " `"$latestYmlPath`""
+        Write-Host "    + latest.yml" -ForegroundColor DarkGray
+    }
+    
+    $cmd = "gh release create $tagName $uploadFiles --title `"BroadcastKit $tagName`" --notes-file `"$notesFile`""
+    Invoke-Expression $cmd
     Remove-Item $notesFile -ErrorAction SilentlyContinue
-    Write-Success "GitHub Release erstellt"
+    Write-Success "GitHub Release erstellt (mit Auto-Update Dateien)"
     
     # Done
     Write-Host ""
