@@ -247,7 +247,7 @@ function Do-Release($type) {
     Write-Success "Installer erstellt"
     
     # Check installer
-    $installerName = "BroadcastKit Setup $newVersion.exe"
+    $installerName = "BroadcastKit-Setup-$newVersion.exe"
     $installerPath = "installer\$installerName"
     if (-not (Test-Path $installerPath)) {
         throw "Installer nicht gefunden: $installerPath"
@@ -288,7 +288,7 @@ function Do-Release($type) {
 
 ## :cd: Installation
 
-1. ``BroadcastKit Setup $newVersion.exe`` herunterladen
+1. ``BroadcastKit-Setup-$newVersion.exe`` herunterladen
 2. Installer ausfuehren
 3. Browser Sources in OBS hinzufuegen
 

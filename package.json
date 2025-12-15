@@ -65,7 +65,8 @@
             "license": "build/license.txt",
             "include": "build/installer.nsh",
             "warningsAsErrors": false,
-            "runAfterFinish": true
+            "runAfterFinish": true,
+            "artifactName": "BroadcastKit-Setup-${version}.${ext}"
         },
         "portable": {
             "artifactName": "BroadcastKit-Portable.exe"

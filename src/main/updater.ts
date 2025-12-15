@@ -74,13 +74,26 @@ function setupEventHandlers(): void {
       buttons: ['Jetzt herunterladen', 'Später'],
       defaultId: 0,
       cancelId: 1
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.response === 0) {
+        console.log('[Updater] User confirmed download, starting...');
         mainWindow?.webContents.send('update-status', { 
           status: 'downloading', 
           version: info.version 
         });
-        autoUpdater.downloadUpdate();
+        try {
+          await autoUpdater.downloadUpdate();
+          console.log('[Updater] Download started successfully');
+        } catch (err: any) {
+          console.error('[Updater] Download failed:', err.message);
+          mainWindow?.webContents.send('update-status', { 
+            status: 'error', 
+            error: err.message 
+          });
+          dialog.showErrorBox('Download fehlgeschlagen', `Das Update konnte nicht heruntergeladen werden:\n${err.message}`);
+        }
+      } else {
+        console.log('[Updater] User postponed download');
       }
     });
   });
@@ -130,7 +143,13 @@ function setupEventHandlers(): void {
       cancelId: 1
     }).then((result) => {
       if (result.response === 0) {
-        autoUpdater.quitAndInstall(false, true);
+        console.log('[Updater] User confirmed install, quitting and installing...');
+        // Set flag to prevent other close handlers from interfering
+        setImmediate(() => {
+          autoUpdater.quitAndInstall(false, true);
+        });
+      } else {
+        console.log('[Updater] User postponed installation');
       }
     });
   });
@@ -138,11 +157,17 @@ function setupEventHandlers(): void {
   // Error handling
   autoUpdater.on('error', (error) => {
     console.error('[Updater] Error:', error.message);
+    console.error('[Updater] Error stack:', error.stack);
     isCheckingForUpdates = false;
     mainWindow?.webContents.send('update-status', { 
       status: 'error', 
       error: error.message 
     });
+    
+    // Show error dialog for critical errors
+    if (error.message && !error.message.includes('net::ERR_INTERNET_DISCONNECTED')) {
+      dialog.showErrorBox('Update-Fehler', `Beim Update ist ein Fehler aufgetreten:\n${error.message}`);
+    }
   });
 }
 
