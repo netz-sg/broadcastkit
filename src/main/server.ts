@@ -76,25 +76,25 @@ export class ExpressServer {
     });
 
     // Stream Scenes overlay routes (each scene is a separate browser source)
-    this.app.get('/overlay/scene/starting', (req, res) => {
+    this.app.get('/overlay/scene-starting', (req, res) => {
       const overlayPath = path.join(this.getOverlaysPath(), 'scene-starting.html');
       console.log('[Server] Serving Starting Scene overlay from:', overlayPath);
       res.sendFile(overlayPath);
     });
 
-    this.app.get('/overlay/scene/brb', (req, res) => {
+    this.app.get('/overlay/scene-brb', (req, res) => {
       const overlayPath = path.join(this.getOverlaysPath(), 'scene-brb.html');
       console.log('[Server] Serving BRB Scene overlay from:', overlayPath);
       res.sendFile(overlayPath);
     });
 
-    this.app.get('/overlay/scene/ending', (req, res) => {
+    this.app.get('/overlay/scene-ending', (req, res) => {
       const overlayPath = path.join(this.getOverlaysPath(), 'scene-ending.html');
       console.log('[Server] Serving Ending Scene overlay from:', overlayPath);
       res.sendFile(overlayPath);
     });
 
-    this.app.get('/overlay/scene/technical', (req, res) => {
+    this.app.get('/overlay/scene-technical', (req, res) => {
       const overlayPath = path.join(this.getOverlaysPath(), 'scene-technical.html');
       console.log('[Server] Serving Technical Scene overlay from:', overlayPath);
       res.sendFile(overlayPath);

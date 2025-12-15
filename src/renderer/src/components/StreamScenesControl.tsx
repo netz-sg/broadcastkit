@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const { ipcRenderer } = window.require('electron');
+
 interface SceneConfig {
   id: string;
   title: string;
@@ -99,7 +101,7 @@ const StreamScenesControl: React.FC = () => {
     setActiveSceneId(sceneId);
 
     // Initial trigger
-    window.electron.ipcRenderer.invoke('trigger-overlay', {
+    ipcRenderer.invoke('trigger-overlay', {
       module: 'STREAM_SCENE',
       payload: {
         action: 'SHOW',
@@ -124,8 +126,15 @@ const StreamScenesControl: React.FC = () => {
       remaining -= 1;
       setActiveCountdowns(prev => ({ ...prev, [sceneId]: remaining }));
 
-      // Update overlay every second (optional, or just let overlay handle it)
-      // For sync, we might want to send updates occasionally or rely on overlay's own timer
+      // Send update to overlay
+      ipcRenderer.invoke('trigger-overlay', {
+        module: 'STREAM_SCENE',
+        payload: {
+          action: 'UPDATE_COUNTDOWN',
+          sceneId: sceneId,
+          remainingSeconds: remaining
+        }
+      });
       
       if (remaining <= 0) {
         if (countdownRefs.current[sceneId]) {
@@ -146,7 +155,7 @@ const StreamScenesControl: React.FC = () => {
       setActiveSceneId(null);
     }
 
-    window.electron.ipcRenderer.invoke('trigger-overlay', {
+    ipcRenderer.invoke('trigger-overlay', {
       module: 'STREAM_SCENE',
       payload: {
         action: 'HIDE',
@@ -166,7 +175,7 @@ const StreamScenesControl: React.FC = () => {
     
     // If live, update immediately
     if (activeSceneId === selectedScene) {
-      window.electron.ipcRenderer.invoke('trigger-overlay', {
+      ipcRenderer.invoke('trigger-overlay', {
         module: 'STREAM_SCENE',
         payload: {
           action: 'UPDATE',

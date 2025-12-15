@@ -232,8 +232,19 @@ class ConfigStore {
 
   constructor() {
     this.store = new Store<AppConfig>({
+      name: 'config', // Explicitly name the file config.json
       defaults: defaultConfig,
+      clearInvalidConfig: false, // IMPORTANT: Never wipe config on schema mismatch
+      migrations: {
+        // Example migration if needed in future
+        // '1.0.0': store => {
+        //   store.set('debugPhase', true);
+        // }
+      }
     });
+    
+    // Log config path for debugging/verification
+    console.log('[ConfigStore] Settings saved to:', this.store.path);
   }
 
   // OBS Settings

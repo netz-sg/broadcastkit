@@ -282,19 +282,20 @@
     }
     
     socket.on('overlay-event', (data) => {
-      if (data.module === 'SCENE_STARTING') {
+      if (data.module === 'STREAM_SCENE' && data.payload.sceneId === 'starting') {
         const payload = data.payload;
         
         if (payload.action === 'SHOW') {
+          const config = payload.config;
           // Update content
-          titleEl.textContent = payload.title || 'Stream startet gleich';
-          subtitleEl.textContent = payload.subtitle || '';
-          setAccentColor(payload.accentColor || '#6366f1');
+          titleEl.textContent = config.title || 'Stream startet gleich';
+          subtitleEl.textContent = config.subtitle || '';
+          setAccentColor(config.accentColor || '#6366f1');
           
           // Handle countdown
-          if (payload.showCountdown && payload.countdown > 0) {
-            totalSeconds = payload.countdown;
-            initialSeconds = payload.countdown;
+          if (config.showCountdown && config.remainingSeconds > 0) {
+            totalSeconds = config.remainingSeconds;
+            initialSeconds = config.remainingSeconds;
             updateCountdown(totalSeconds);
             countdownEl.style.display = 'flex';
             progressContainer.style.display = 'block';
@@ -309,7 +310,7 @@
         }
         
         if (payload.action === 'UPDATE_COUNTDOWN') {
-          updateCountdown(payload.countdown);
+          updateCountdown(payload.remainingSeconds);
         }
         
         if (payload.action === 'HIDE') {

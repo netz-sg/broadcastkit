@@ -351,60 +351,45 @@
       document.documentElement.style.setProperty('--accent', color);
     }
     
-    function updateCountdown() {
-      if (remainingSeconds <= 0) {
-        clearInterval(countdownInterval);
-        countdownValue.textContent = '00:00';
-        return;
-      }
-      
-      const mins = Math.floor(remainingSeconds / 60);
-      const secs = remainingSeconds % 60;
+    function updateCountdown(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
       countdownValue.textContent = 
         String(mins).padStart(2, '0') + ':' + 
         String(secs).padStart(2, '0');
-      
-      remainingSeconds--;
-    }
-    
-    function startCountdown(minutes) {
-      clearInterval(countdownInterval);
-      remainingSeconds = minutes * 60;
-      countdownEl.classList.add('visible');
-      updateCountdown();
-      countdownInterval = setInterval(updateCountdown, 1000);
-    }
-    
-    function stopCountdown() {
-      clearInterval(countdownInterval);
-      countdownEl.classList.remove('visible');
     }
     
     socket.on('overlay-event', (data) => {
-      if (data.module === 'SCENE_TECHNICAL') {
+      if (data.module === 'STREAM_SCENE' && data.payload.sceneId === 'technical') {
         const payload = data.payload;
         
         if (payload.action === 'SHOW') {
-          const title = payload.title || 'Technische Schwierigkeiten';
+          const config = payload.config;
+          const title = config.title || 'Technische Schwierigkeiten';
           titleEl.textContent = title;
           titleEl.setAttribute('data-text', title);
-          subtitleEl.textContent = payload.subtitle || '';
-          setAccentColor(payload.accentColor || '#ef4444');
+          subtitleEl.textContent = config.subtitle || '';
+          setAccentColor(config.accentColor || '#ef4444');
           
-          if (payload.showCountdown && payload.countdownMinutes > 0) {
-            startCountdown(payload.countdownMinutes);
+          if (config.showCountdown && config.remainingSeconds > 0) {
+            updateCountdown(config.remainingSeconds);
+            countdownEl.classList.add('visible');
           } else {
-            stopCountdown();
+            countdownEl.classList.remove('visible');
           }
           
           content.classList.remove('hidden');
           content.classList.add('visible');
         }
         
+        if (payload.action === 'UPDATE_COUNTDOWN') {
+          updateCountdown(payload.remainingSeconds);
+        }
+        
         if (payload.action === 'HIDE') {
           content.classList.remove('visible');
           content.classList.add('hidden');
-          stopCountdown();
+          countdownEl.classList.remove('visible');
         }
       }
     });

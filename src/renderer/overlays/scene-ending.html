@@ -263,13 +263,14 @@
     }
     
     socket.on('overlay-event', (data) => {
-      if (data.module === 'SCENE_ENDING') {
+      if (data.module === 'STREAM_SCENE' && data.payload.sceneId === 'ending') {
         const payload = data.payload;
         
         if (payload.action === 'SHOW') {
-          titleEl.innerHTML = (payload.title || 'Danke fürs Zuschauen!') + ' <span class="thanks-wave">👋</span>';
-          subtitleEl.textContent = payload.subtitle || '';
-          setAccentColor(payload.accentColor || '#ec4899');
+          const config = payload.config;
+          titleEl.innerHTML = (config.title || 'Danke fürs Zuschauen!') + ' <span class="thanks-wave">👋</span>';
+          subtitleEl.textContent = config.subtitle || '';
+          setAccentColor(config.accentColor || '#ec4899');
           
           content.classList.remove('hidden');
           content.classList.add('visible');

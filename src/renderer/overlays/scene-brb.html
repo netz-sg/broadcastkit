@@ -343,17 +343,18 @@
     }
     
     socket.on('overlay-event', (data) => {
-      if (data.module === 'SCENE_BRB') {
+      if (data.module === 'STREAM_SCENE' && data.payload.sceneId === 'brb') {
         const payload = data.payload;
         
         if (payload.action === 'SHOW') {
-          titleEl.textContent = payload.title || 'Gleich zurück';
-          subtitleEl.textContent = payload.subtitle || '';
-          setAccentColor(payload.accentColor || '#f59e0b');
+          const config = payload.config;
+          titleEl.textContent = config.title || 'Gleich zurück';
+          subtitleEl.textContent = config.subtitle || '';
+          setAccentColor(config.accentColor || '#f59e0b');
           
-          if (payload.showCountdown && payload.countdown > 0) {
-            totalSeconds = payload.countdown;
-            initialSeconds = payload.countdown;
+          if (config.showCountdown && config.remainingSeconds > 0) {
+            totalSeconds = config.remainingSeconds;
+            initialSeconds = config.remainingSeconds;
             updateCountdown(totalSeconds);
             countdownEl.style.display = 'flex';
             progressContainer.style.display = 'block';
@@ -367,7 +368,7 @@
         }
         
         if (payload.action === 'UPDATE_COUNTDOWN') {
-          updateCountdown(payload.countdown);
+          updateCountdown(payload.remainingSeconds);
         }
         
         if (payload.action === 'HIDE') {
