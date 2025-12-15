@@ -420,7 +420,7 @@ function ReactionControl({ config, fullWidth = false }: Props) {
   };
 
   return (
-    <div className={`space-y-4 ${fullWidth ? '' : 'max-w-2xl'}`}>
+    <div className="space-y-4 w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

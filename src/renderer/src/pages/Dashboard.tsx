@@ -198,15 +198,16 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0">
-        <AnimatePresence mode="wait">
+      {/* Main Content Area - Fixed width container to prevent layout shifts */}
+      <div className="flex-1 min-w-0 w-full">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="w-full"
           >
             {renderContent()}
           </motion.div>
@@ -224,11 +225,11 @@ interface OverviewTabProps {
 
 function OverviewTab({ config, onNavigate }: OverviewTabProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Welcome Banner */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         className="card bg-gradient-to-br from-accent-blue/10 to-accent-purple/10 border-accent-blue/20"
       >
         <h2 className="text-xl font-bold mb-1">Willkommen bei BroadcastKit</h2>

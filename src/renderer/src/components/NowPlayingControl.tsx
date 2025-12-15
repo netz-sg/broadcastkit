@@ -345,10 +345,9 @@ function NowPlayingControl({ config, fullWidth = false }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.1 }}
-      className="card"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="card w-full"
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
