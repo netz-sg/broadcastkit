@@ -1,527 +1,524 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const { ipcRenderer } = window.require('electron');
-
-interface Props {
-  config: any;
-  fullWidth?: boolean;
-}
-
-interface StreamScene {
+interface SceneConfig {
   id: string;
-  name: string;
   title: string;
   subtitle: string;
   showCountdown: boolean;
   countdownMinutes: number;
-  style: 'minimal' | 'gaming' | 'elegant';
-  backgroundType: 'gradient' | 'animated' | 'solid';
-  backgroundColor: string;
   accentColor: string;
+  backgroundType: string;
   showSocials: boolean;
 }
 
-type SceneId = 'starting' | 'brb' | 'ending' | 'technical';
-
-const sceneInfo: Record<SceneId, { icon: JSX.Element; defaultColor: string; description: string }> = {
-  starting: {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    defaultColor: '#6366f1',
-    description: 'Zeige vor dem Stream'
-  },
-  brb: {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    defaultColor: '#f59e0b',
-    description: 'Kurze Pause'
-  },
-  ending: {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    ),
-    defaultColor: '#ec4899',
-    description: 'Stream Ende'
-  },
-  technical: {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-    defaultColor: '#ef4444',
-    description: 'Technische Probleme'
-  }
-};
-
-// Default scenes für Initialisierung
-const defaultScenes: Record<SceneId, StreamScene> = {
+const defaultScenes: Record<string, SceneConfig> = {
   starting: {
     id: 'starting',
-    name: 'Starting Soon',
-    title: 'Stream startet gleich',
-    subtitle: 'Mach es dir bequem!',
+    title: 'STREAM STARTET',
+    subtitle: 'Hol dir was zu trinken, es geht gleich los!',
     showCountdown: true,
     countdownMinutes: 5,
-    style: 'gaming',
+    accentColor: '#6366f1', // Indigo
     backgroundType: 'animated',
-    backgroundColor: '#0a0a0f',
-    accentColor: '#6366f1',
-    showSocials: true,
+    showSocials: true
   },
   brb: {
     id: 'brb',
-    name: 'Be Right Back',
-    title: 'Gleich zurück',
-    subtitle: 'Kurze Pause...',
+    title: 'BIN GLEICH ZURÜCK',
+    subtitle: 'Kurze Pause, bleib dran!',
     showCountdown: true,
-    countdownMinutes: 5,
-    style: 'gaming',
+    countdownMinutes: 3,
+    accentColor: '#f59e0b', // Amber
     backgroundType: 'animated',
-    backgroundColor: '#0a0a0f',
-    accentColor: '#f59e0b',
-    showSocials: true,
+    showSocials: true
   },
   ending: {
     id: 'ending',
-    name: 'Stream Ending',
-    title: 'Danke fürs Zuschauen!',
-    subtitle: 'Bis zum nächsten Mal',
+    title: 'STREAM ENDET',
+    subtitle: 'Danke fürs Zuschauen! Bis zum nächsten Mal.',
     showCountdown: false,
     countdownMinutes: 0,
-    style: 'gaming',
+    accentColor: '#ec4899', // Pink
     backgroundType: 'animated',
-    backgroundColor: '#0a0a0f',
-    accentColor: '#ec4899',
-    showSocials: true,
+    showSocials: true
   },
   technical: {
     id: 'technical',
-    name: 'Technical Difficulties',
-    title: 'Technische Probleme',
-    subtitle: 'Wir sind gleich zurück!',
+    title: 'TECHNISCHE PROBLEME',
+    subtitle: 'Wir sind sofort wieder da.',
     showCountdown: false,
     countdownMinutes: 0,
-    style: 'gaming',
-    backgroundType: 'animated',
-    backgroundColor: '#0a0a0f',
-    accentColor: '#ef4444',
-    showSocials: false,
+    accentColor: '#ef4444', // Red
+    backgroundType: 'static',
+    showSocials: false
   }
 };
 
-function StreamScenesControl({ config, fullWidth = false }: Props) {
-  // Merge config scenes with defaults to ensure all fields exist
-  const scenesConfig = config.overlays?.streamScenes?.scenes || {};
-  const initialScenes: Record<SceneId, StreamScene> = {
-    starting: { ...defaultScenes.starting, ...scenesConfig.starting },
-    brb: { ...defaultScenes.brb, ...scenesConfig.brb },
-    ending: { ...defaultScenes.ending, ...scenesConfig.ending },
-    technical: { ...defaultScenes.technical, ...scenesConfig.technical },
-  };
-  
-  const [scenes, setScenes] = useState<Record<SceneId, StreamScene>>(initialScenes);
-  const [selectedScene, setSelectedScene] = useState<SceneId>('starting');
-  const [activeCountdowns, setActiveCountdowns] = useState<Record<SceneId, number | null>>({
+const StreamScenesControl: React.FC = () => {
+  const [selectedScene, setSelectedScene] = useState<string>('starting');
+  const [scenes, setScenes] = useState<Record<string, SceneConfig>>(defaultScenes);
+  const [activeCountdowns, setActiveCountdowns] = useState<Record<string, number | null>>({
     starting: null,
     brb: null,
     ending: null,
     technical: null
   });
-  const countdownRefs = useRef<Record<SceneId, NodeJS.Timeout | null>>({
+  const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
+
+  const countdownRefs = useRef<Record<string, NodeJS.Timeout | null>>({
     starting: null,
     brb: null,
     ending: null,
     technical: null
   });
 
-  const currentScene = scenes[selectedScene];
-
-  // Cleanup timers
+  // Load saved settings on mount
   useEffect(() => {
-    return () => {
-      Object.values(countdownRefs.current).forEach(ref => {
-        if (ref) clearInterval(ref);
-      });
+    const loadSettings = async () => {
+      try {
+        // In a real app, we'd load from store here. For now using defaults.
+        // const saved = await window.electron.ipcRenderer.invoke('get-scene-settings');
+        // if (saved) setScenes(saved);
+      } catch (error) {
+        console.error('Failed to load scene settings:', error);
+      }
     };
+    loadSettings();
   }, []);
 
-  const updateScene = (field: keyof StreamScene, value: any) => {
-    const updated = { ...scenes[selectedScene], [field]: value };
-    setScenes(prev => ({ ...prev, [selectedScene]: updated }));
-  };
-
-  const saveSettings = async () => {
-    await ipcRenderer.invoke('save-stream-scene', selectedScene, scenes[selectedScene]);
-  };
-
-  // Auto-save on changes
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (currentScene) saveSettings();
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [scenes]);
-
-  const startCountdown = (sceneId: SceneId) => {
+  const startCountdown = (sceneId: string) => {
     const scene = scenes[sceneId];
     
-    if (!scene.showCountdown || scene.countdownMinutes <= 0) {
-      // Show without countdown - use -1 to indicate "active but no countdown"
-      setActiveCountdowns(prev => ({ ...prev, [sceneId]: -1 }));
-      triggerScene(sceneId, 'SHOW', 0);
+    // Clear existing interval for this scene if any
+    if (countdownRefs.current[sceneId]) {
+      clearInterval(countdownRefs.current[sceneId]!);
+    }
+
+    // Set active scene
+    setActiveSceneId(sceneId);
+
+    // Initial trigger
+    window.electron.ipcRenderer.invoke('trigger-overlay', {
+      module: 'STREAM_SCENE',
+      payload: {
+        action: 'SHOW',
+        sceneId: sceneId,
+        config: {
+          ...scene,
+          remainingSeconds: scene.showCountdown ? scene.countdownMinutes * 60 : null
+        }
+      }
+    });
+
+    if (!scene.showCountdown) {
+      setActiveCountdowns(prev => ({ ...prev, [sceneId]: null }));
       return;
     }
 
-    const totalSeconds = scene.countdownMinutes * 60;
-    setActiveCountdowns(prev => ({ ...prev, [sceneId]: totalSeconds }));
+    // Start local countdown
+    let remaining = scene.countdownMinutes * 60;
+    setActiveCountdowns(prev => ({ ...prev, [sceneId]: remaining }));
 
-    // Send initial show with countdown
-    triggerScene(sceneId, 'SHOW', totalSeconds);
-
-    // Start countdown
     countdownRefs.current[sceneId] = setInterval(() => {
-      setActiveCountdowns(prev => {
-        const current = prev[sceneId];
-        if (current === null || current <= 1) {
-          if (countdownRefs.current[sceneId]) {
-            clearInterval(countdownRefs.current[sceneId]!);
-            countdownRefs.current[sceneId] = null;
-          }
-          // Keep active state, just stop countdown
-          return { ...prev, [sceneId]: -1 };
+      remaining -= 1;
+      setActiveCountdowns(prev => ({ ...prev, [sceneId]: remaining }));
+
+      // Update overlay every second (optional, or just let overlay handle it)
+      // For sync, we might want to send updates occasionally or rely on overlay's own timer
+      
+      if (remaining <= 0) {
+        if (countdownRefs.current[sceneId]) {
+          clearInterval(countdownRefs.current[sceneId]!);
         }
-        const newValue = current - 1;
-        // Update overlay countdown
-        triggerScene(sceneId, 'UPDATE_COUNTDOWN', newValue);
-        return { ...prev, [sceneId]: newValue };
-      });
+      }
     }, 1000);
   };
 
-  const stopScene = (sceneId: SceneId) => {
+  const stopScene = (sceneId: string) => {
     if (countdownRefs.current[sceneId]) {
       clearInterval(countdownRefs.current[sceneId]!);
       countdownRefs.current[sceneId] = null;
     }
+    
     setActiveCountdowns(prev => ({ ...prev, [sceneId]: null }));
-    triggerScene(sceneId, 'HIDE', 0);
-  };
+    if (activeSceneId === sceneId) {
+      setActiveSceneId(null);
+    }
 
-  const triggerScene = (sceneId: SceneId, action: string, countdown: number) => {
-    const scene = scenes[sceneId];
-    ipcRenderer.invoke('trigger-overlay', {
-      module: `SCENE_${sceneId.toUpperCase()}`,
+    window.electron.ipcRenderer.invoke('trigger-overlay', {
+      module: 'STREAM_SCENE',
       payload: {
-        action,
-        countdown,
-        ...scene
+        action: 'HIDE',
+        sceneId: sceneId
       }
     });
   };
 
-  const formatTime = (seconds: number): string => {
-    if (seconds < 0) return ''; // No countdown display
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const updateScene = (key: keyof SceneConfig, value: any) => {
+    setScenes(prev => ({
+      ...prev,
+      [selectedScene]: {
+        ...prev[selectedScene],
+        [key]: value
+      }
+    }));
+    
+    // If live, update immediately
+    if (activeSceneId === selectedScene) {
+      window.electron.ipcRenderer.invoke('trigger-overlay', {
+        module: 'STREAM_SCENE',
+        payload: {
+          action: 'UPDATE',
+          sceneId: selectedScene,
+          config: {
+            ...scenes[selectedScene],
+            [key]: value
+          }
+        }
+      });
+    }
   };
 
-  const isSceneActive = (sceneId: SceneId) => activeCountdowns[sceneId] !== null;
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
-  if (!currentScene) {
-    return <div className="card">Loading...</div>;
-  }
+  const currentScene = scenes[selectedScene];
+  const isLive = activeSceneId === selectedScene;
 
   return (
-    <div className="card w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="h-full flex flex-col gap-6">
+      {/* Browser Source URL */}
+      <div className="glass-panel p-4 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Stream Scenes</h3>
-            <p className="text-xs text-gray-400">Fullscreen Overlays</p>
+            <h3 className="text-sm font-medium text-white">Browser Source URL</h3>
+            <p className="text-xs text-zinc-400">Füge diese URL in OBS als Browser Source hinzu</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2 bg-black/40 rounded-lg border border-white/5 px-3 py-2">
+          <code className="text-xs font-mono text-amber-400 select-all">/overlay/scene-{selectedScene}</code>
         </div>
       </div>
 
       {/* Scene Selector Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {(Object.keys(scenes) as SceneId[]).map((sceneId) => {
-          const info = sceneInfo[sceneId];
-          const scene = scenes[sceneId];
-          const isActive = isSceneActive(sceneId);
-          return (
-            <button
-              key={sceneId}
-              onClick={() => setSelectedScene(sceneId)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
-                selectedScene === sceneId
-                  ? 'bg-white/10 text-white border border-white/20'
-                  : 'bg-dark-hover text-gray-400 hover:text-white border border-transparent'
-              } ${isActive ? 'ring-2 ring-green-500' : ''}`}
-              style={selectedScene === sceneId ? { borderColor: scene.accentColor + '50' } : {}}
-            >
-              <span style={{ color: selectedScene === sceneId ? scene.accentColor : undefined }}>
-                {info.icon}
-              </span>
-              <span className="text-sm font-medium">{scene.name}</span>
-              {isActive && (
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              )}
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-4 gap-3">
+        {Object.values(scenes).map((scene) => (
+          <button
+            key={scene.id}
+            onClick={() => setSelectedScene(scene.id)}
+            className={`relative p-4 rounded-xl border transition-all duration-200 text-left group overflow-hidden ${
+              selectedScene === scene.id
+                ? 'bg-zinc-800/80 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-800/50 hover:border-white/10'
+            }`}
+          >
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br from-${scene.accentColor} to-transparent`} />
+            
+            <div className="relative z-10">
+              <div className="flex justify-between items-start mb-2">
+                <div className={`p-2 rounded-lg ${
+                  selectedScene === scene.id ? 'bg-indigo-500/20 text-indigo-400' : 'bg-zinc-800 text-zinc-400'
+                }`}>
+                  {getIconForScene(scene.id)}
+                </div>
+                {activeSceneId === scene.id && (
+                  <span className="flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                )}
+              </div>
+              <div className="font-medium text-sm text-zinc-200">{scene.title}</div>
+              <div className="text-xs text-zinc-500 mt-1 truncate">{scene.subtitle}</div>
+            </div>
+          </button>
+        ))}
       </div>
 
-      {/* Scene Editor */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selectedScene}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="space-y-6"
-        >
-          {/* Preview Card */}
-          <div 
-            className="relative rounded-xl overflow-hidden h-40"
-            style={{ 
-              background: currentScene.backgroundType === 'gradient' 
-                ? `linear-gradient(135deg, ${currentScene.backgroundColor} 0%, ${currentScene.accentColor}30 100%)`
-                : currentScene.backgroundColor
-            }}
-          >
-            {currentScene.backgroundType === 'animated' && (
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-[length:20px_20px] animate-pulse" />
-              </div>
-            )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-              <h2 className="text-2xl font-bold text-white mb-1">{currentScene.title}</h2>
-              <p className="text-gray-300 text-sm">{currentScene.subtitle}</p>
-              {currentScene.showCountdown && activeCountdowns[selectedScene] !== null && activeCountdowns[selectedScene]! > 0 && (
-                <div 
-                  className="mt-3 text-3xl font-mono font-bold"
-                  style={{ color: currentScene.accentColor }}
-                >
-                  {formatTime(activeCountdowns[selectedScene]!)}
-                </div>
-              )}
-              {currentScene.showCountdown && activeCountdowns[selectedScene] === null && (
-                <div className="mt-3 text-xl font-mono text-gray-500">
-                  {currentScene.countdownMinutes}:00
-                </div>
-              )}
-              {isSceneActive(selectedScene) && (
-                <div className="mt-2 flex items-center gap-2 text-green-400 text-xs">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  LIVE
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex gap-3">
-            {!isSceneActive(selectedScene) ? (
-              <button
-                onClick={() => startCountdown(selectedScene)}
-                className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                </svg>
-                Scene Aktivieren
-              </button>
-            ) : (
-              <button
-                onClick={() => stopScene(selectedScene)}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
-                Scene Stoppen
-              </button>
-            )}
-          </div>
-
-          {/* Settings */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Einstellungen</h4>
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        {/* Left Column: Preview & Actions */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+          {/* Preview Area */}
+          <div className="glass-panel p-6 rounded-2xl border border-white/10 relative overflow-hidden flex-1 min-h-[300px] flex flex-col">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
             
-            {/* Title & Subtitle */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">Titel</label>
-                <input
-                  type="text"
-                  value={currentScene.title}
-                  onChange={(e) => updateScene('title', e.target.value)}
-                  className="input w-full"
-                  placeholder="Stream startet gleich..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">Untertitel</label>
-                <input
-                  type="text"
-                  value={currentScene.subtitle}
-                  onChange={(e) => updateScene('subtitle', e.target.value)}
-                  className="input w-full"
-                  placeholder="Mach es dir bequem!"
-                />
+            <div className="relative z-10 flex-1 flex items-center justify-center">
+              <div 
+                className="aspect-video w-full max-w-2xl bg-zinc-950 rounded-xl border border-white/5 shadow-2xl overflow-hidden relative group"
+              >
+                {/* Simulated Overlay Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                  {/* Background Simulation */}
+                  <div 
+                    className="absolute inset-0 opacity-30 transition-colors duration-500"
+                    style={{ 
+                      background: `radial-gradient(circle at center, ${currentScene.accentColor}40 0%, transparent 70%)` 
+                    }} 
+                  />
+                  
+                  <motion.h2 
+                    key={currentScene.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-3xl font-bold text-white mb-2 relative z-10"
+                  >
+                    {currentScene.title}
+                  </motion.h2>
+                  
+                  <motion.p 
+                    key={currentScene.subtitle}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-zinc-400 text-lg relative z-10"
+                  >
+                    {currentScene.subtitle}
+                  </motion.p>
+
+                  {currentScene.showCountdown && (
+                    <div 
+                      className="mt-6 text-5xl font-mono font-bold tabular-nums relative z-10"
+                      style={{ color: currentScene.accentColor }}
+                    >
+                      {activeCountdowns[selectedScene] !== null && activeCountdowns[selectedScene]! > 0
+                        ? formatTime(activeCountdowns[selectedScene]!)
+                        : `${currentScene.countdownMinutes}:00`
+                      }
+                    </div>
+                  )}
+
+                  {isLive && (
+                    <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                      <span className="text-xs font-medium text-red-400 tracking-wide">LIVE ON AIR</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Countdown Settings */}
-            <div className="p-4 bg-dark-hover rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">Countdown anzeigen</span>
-                </div>
+            {/* Action Bar */}
+            <div className="relative z-10 mt-6 flex gap-4">
+              {!isLive ? (
                 <button
-                  onClick={() => updateScene('showCountdown', !currentScene.showCountdown)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    currentScene.showCountdown ? 'bg-green-600' : 'bg-gray-600'
-                  }`}
+                  onClick={() => startCountdown(selectedScene)}
+                  className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 group"
                 >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    currentScene.showCountdown ? 'translate-x-7' : 'translate-x-1'
-                  }`} />
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  </svg>
+                  Scene Starten
                 </button>
-              </div>
-              {currentScene.showCountdown && (
-                <div className="flex items-center gap-3">
-                  <label className="text-xs text-gray-500">Minuten:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="60"
-                    value={currentScene.countdownMinutes}
-                    onChange={(e) => updateScene('countdownMinutes', parseInt(e.target.value) || 5)}
-                    className="input w-20 text-center"
-                  />
-                  <div className="flex gap-1">
-                    {[1, 3, 5, 10].map(mins => (
-                      <button
-                        key={mins}
-                        onClick={() => updateScene('countdownMinutes', mins)}
-                        className={`px-2 py-1 text-xs rounded ${
-                          currentScene.countdownMinutes === mins
-                            ? 'bg-accent-blue text-white'
-                            : 'bg-dark-bg text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {mins}m
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              ) : (
+                <button
+                  onClick={() => stopScene(selectedScene)}
+                  className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/50 text-red-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 group"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                  </svg>
+                  Scene Beenden
+                </button>
               )}
             </div>
+          </div>
+        </div>
 
-            {/* Colors */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">Akzentfarbe</label>
-                <div className="flex items-center gap-2">
+        {/* Right Column: Settings */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="glass-panel p-6 rounded-2xl border border-white/10">
+            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+              <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+              Einstellungen
+            </h3>
+
+            <div className="space-y-5">
+              {/* Text Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Titel</label>
                   <input
-                    type="color"
-                    value={currentScene.accentColor}
-                    onChange={(e) => updateScene('accentColor', e.target.value)}
-                    className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                    type="text"
+                    value={currentScene.title}
+                    onChange={(e) => updateScene('title', e.target.value)}
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                    placeholder="Stream startet gleich..."
                   />
-                  <div className="flex gap-1 flex-wrap">
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Untertitel</label>
+                  <input
+                    type="text"
+                    value={currentScene.subtitle}
+                    onChange={(e) => updateScene('subtitle', e.target.value)}
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                    placeholder="Mach es dir bequem!"
+                  />
+                </div>
+              </div>
+
+              <div className="h-px bg-white/5 my-4" />
+
+              {/* Countdown Config */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-zinc-300">Countdown Timer</label>
+                  <button
+                    onClick={() => updateScene('showCountdown', !currentScene.showCountdown)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                      currentScene.showCountdown ? 'bg-indigo-500' : 'bg-zinc-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        currentScene.showCountdown ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {currentScene.showCountdown && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-zinc-900/30 rounded-xl p-4 border border-white/5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <label className="block text-xs text-zinc-500 mb-1.5">Dauer (Minuten)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="60"
+                              value={currentScene.countdownMinutes}
+                              onChange={(e) => updateScene('countdownMinutes', parseInt(e.target.value) || 5)}
+                              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white text-center focus:border-indigo-500/50 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex gap-1 pt-5">
+                            {[1, 3, 5, 10].map(mins => (
+                              <button
+                                key={mins}
+                                onClick={() => updateScene('countdownMinutes', mins)}
+                                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                                  currentScene.countdownMinutes === mins
+                                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                }`}
+                              >
+                                {mins}m
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="h-px bg-white/5 my-4" />
+
+              {/* Appearance */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-2">Akzentfarbe</label>
+                  <div className="flex flex-wrap gap-2">
                     {['#6366f1', '#f59e0b', '#ec4899', '#ef4444', '#10b981', '#3b82f6'].map(color => (
                       <button
                         key={color}
                         onClick={() => updateScene('accentColor', color)}
-                        className={`w-6 h-6 rounded-full ${currentScene.accentColor === color ? 'ring-2 ring-white' : ''}`}
+                        className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${
+                          currentScene.accentColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-110' : ''
+                        }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-2">Hintergrund</label>
+                  <select
+                    value={currentScene.backgroundType}
+                    onChange={(e) => updateScene('backgroundType', e.target.value)}
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                  >
+                    <option value="animated">Animiert</option>
+                    <option value="gradient">Verlauf</option>
+                    <option value="solid">Einfarbig</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">Hintergrund</label>
-                <select
-                  value={currentScene.backgroundType}
-                  onChange={(e) => updateScene('backgroundType', e.target.value)}
-                  className="input w-full"
+
+              {/* Socials Toggle */}
+              <div className="flex items-center justify-between pt-2">
+                <label className="text-sm font-medium text-zinc-300">Social Media Links anzeigen</label>
+                <button
+                  onClick={() => updateScene('showSocials', !currentScene.showSocials)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                    currentScene.showSocials ? 'bg-indigo-500' : 'bg-zinc-700'
+                  }`}
                 >
-                  <option value="animated">Animiert</option>
-                  <option value="gradient">Gradient</option>
-                  <option value="solid">Einfarbig</option>
-                </select>
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      currentScene.showSocials ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
-            </div>
-
-            {/* Show Socials Toggle */}
-            <div className="flex items-center justify-between p-4 bg-dark-hover rounded-xl">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                </svg>
-                <span className="text-sm font-medium">Social Links anzeigen</span>
-              </div>
-              <button
-                onClick={() => updateScene('showSocials', !currentScene.showSocials)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  currentScene.showSocials ? 'bg-green-600' : 'bg-gray-600'
-                }`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  currentScene.showSocials ? 'translate-x-7' : 'translate-x-1'
-                }`} />
-              </button>
             </div>
           </div>
-
-          {/* Browser Source URL */}
-          <div className="p-4 bg-dark-hover rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Browser Source URL</p>
-                <code className="text-sm text-accent-blue">
-                  http://localhost:3000/overlay/scene/{selectedScene}
-                </code>
-              </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(`http://localhost:3000/overlay/scene/${selectedScene}`)}
-                className="p-2 bg-dark-bg rounded-lg hover:bg-white/10 transition-colors"
-                title="URL kopieren"
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
+};
+
+function getIconForScene(id: string) {
+  switch (id) {
+    case 'starting':
+      return (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'brb':
+      return (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'ending':
+      return (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      );
+    case 'technical':
+      return (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
 }
 
 export default StreamScenesControl;

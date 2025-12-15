@@ -69,7 +69,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col">
+    <div className="h-screen bg-zinc-950 flex flex-col overflow-hidden text-zinc-100 font-sans selection:bg-indigo-500/30">
       {/* Update Banner */}
       <AnimatePresence>
         {showUpdateBanner && (
@@ -77,7 +77,7 @@ function App() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="bg-gradient-to-r from-accent-blue to-accent-purple text-white px-4 py-2 flex items-center justify-between"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 flex items-center justify-between shadow-lg z-50"
           >
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,7 +85,7 @@ function App() {
               </svg>
               {updateStatus.status === 'downloading' || updateStatus.status === 'progress' ? (
                 <span className="text-sm font-medium">
-                  Downloading v{updateStatus.version}... {updateStatus.percent}%
+                  Lade v{updateStatus.version}... {updateStatus.percent?.toFixed(0)}%
                 </span>
               ) : updateStatus.status === 'ready' ? (
                 <span className="text-sm font-medium">
@@ -97,11 +97,11 @@ function App() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {updateStatus.status === 'ready' ? (
                 <button
                   onClick={handleInstallUpdate}
-                  className="px-3 py-1 bg-white text-accent-blue rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+                  className="px-3 py-1 bg-white text-indigo-600 rounded-lg text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm"
                 >
                   Jetzt installieren
                 </button>
@@ -127,51 +127,51 @@ function App() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="glass border-b border-dark-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
+      <header className="glass-panel border-b border-white/5 z-40 relative">
+        <div className="max-w-[1920px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-6">
             {/* Logo & Title */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-4"
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-accent-blue to-accent-purple rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/20 border border-white/10">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold text-white tracking-tight">
                   BroadcastKit
                 </h1>
-                <p className="text-xs text-gray-400 hidden sm:block">Stream Control Center</p>
+                <p className="text-xs text-zinc-400 font-medium">Stream Control Center</p>
               </div>
             </motion.div>
 
             {/* Navigation & Status Row */}
-            <div className="flex items-center justify-between w-full sm:w-auto gap-2 sm:gap-4">
+            <div className="flex items-center gap-6">
               {/* Navigation */}
-              <nav className="flex items-center gap-1 sm:gap-2">
+              <nav className="flex items-center p-1 bg-zinc-900/50 rounded-xl border border-white/5">
                 <button
                   onClick={() => setCurrentPage('dashboard')}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm rounded-lg transition-all duration-200 ${
+                  className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     currentPage === 'dashboard'
-                      ? 'bg-accent-blue text-white'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-dark-hover'
+                      ? 'bg-zinc-800 text-white shadow-sm border border-white/5'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                   }`}
                 >
                   Dashboard
                 </button>
                 <button
                   onClick={() => setCurrentPage('settings')}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm rounded-lg transition-all duration-200 ${
+                  className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     currentPage === 'settings'
-                      ? 'bg-accent-blue text-white'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-dark-hover'
+                      ? 'bg-zinc-800 text-white shadow-sm border border-white/5'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                   }`}
                 >
-                  Settings
+                  Einstellungen
                 </button>
               </nav>
 
@@ -179,17 +179,29 @@ function App() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 sm:gap-3 glass px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg"
+                className={`flex items-center gap-3 px-4 py-2 rounded-xl border transition-colors ${
+                  obsConnected 
+                    ? 'bg-green-500/10 border-green-500/20' 
+                    : 'bg-red-500/10 border-red-500/20'
+                }`}
               >
-                <div
-                  className={`status-dot ${
-                    obsConnected ? 'bg-accent-green' : 'bg-accent-red'
-                  }`}
-                />
-                <div className="text-xs sm:text-sm">
-                  <div className="font-medium hidden sm:block">{obsConnected ? 'OBS Connected' : 'OBS Disconnected'}</div>
-                  <div className="font-medium sm:hidden">{obsConnected ? 'OBS' : 'Offline'}</div>
-                  <div className="text-xs text-gray-400 hidden md:block">{obsMessage}</div>
+                <div className="relative flex h-3 w-3">
+                  {obsConnected && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${
+                    obsConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`}></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-xs font-bold ${
+                    obsConnected ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {obsConnected ? 'OBS Verbunden' : 'OBS Getrennt'}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-medium hidden md:block leading-none mt-0.5">
+                    {obsMessage}
+                  </span>
                 </div>
               </motion.div>
             </div>
@@ -198,34 +210,61 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 flex-1">
-        <AnimatePresence mode="wait">
-          {currentPage === 'dashboard' ? (
-            <Dashboard key="dashboard" />
-          ) : (
-            <Settings key="settings" />
-          )}
-        </AnimatePresence>
+      <main className="flex-1 overflow-hidden relative">
+        {/* Background Noise/Gradient */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[128px]"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px]"></div>
+        </div>
+
+        <div className="h-full w-full relative z-10">
+          <AnimatePresence mode="wait">
+            {currentPage === 'dashboard' ? (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
+                <Dashboard />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
+                <Settings />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </main>
 
       {/* Footer with Version */}
-      <footer className="border-t border-dark-border py-3 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center gap-2">
-            <span>BroadcastKit</span>
-            <span className="px-2 py-0.5 bg-dark-hover rounded text-gray-400">v{appVersion}</span>
+      <footer className="border-t border-white/5 py-2 px-6 bg-zinc-950/50 backdrop-blur-sm z-40">
+        <div className="max-w-[1920px] mx-auto flex items-center justify-between text-xs text-zinc-500">
+          <div className="flex items-center gap-3">
+            <span className="font-medium">BroadcastKit</span>
+            <span className="px-2 py-0.5 bg-zinc-900 border border-white/5 rounded text-zinc-400 font-mono">v{appVersion}</span>
           </div>
           <button
             onClick={handleCheckUpdate}
             disabled={updateStatus.status === 'checking'}
-            className="flex items-center gap-1.5 hover:text-gray-300 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 hover:text-zinc-300 transition-colors disabled:opacity-50"
           >
             {updateStatus.status === 'checking' ? (
               <>
                 <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>Prüfe...</span>
+                <span>Prüfe auf Updates...</span>
               </>
             ) : (
               <>

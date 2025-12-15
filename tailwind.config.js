@@ -7,17 +7,25 @@ export default {
     extend: {
       colors: {
         dark: {
-          bg: '#0a0a0f',
-          card: '#141419',
-          border: '#1f1f28',
-          hover: '#1a1a22',
+          bg: '#09090b', // Zinc 950
+          card: '#18181b', // Zinc 900
+          border: '#27272a', // Zinc 800
+          hover: '#27272a', // Zinc 800
         },
         accent: {
-          blue: '#3b82f6',
-          purple: '#8b5cf6',
-          green: '#10b981',
-          red: '#ef4444',
+          blue: '#6366f1', // Indigo 500
+          purple: '#a855f7', // Purple 500
+          green: '#22c55e', // Green 500
+          red: '#ef4444', // Red 500
+          orange: '#f97316', // Orange 500
         }
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      boxShadow: {
+        'glow': '0 0 20px -5px var(--tw-shadow-color)',
       },
       animation: {
         'slide-in': 'slideIn 0.5s ease-out',

@@ -5,7 +5,6 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
-  fullWidth?: boolean;
 }
 
 type StyleType = 'card' | 'fullwidth';
@@ -23,7 +22,7 @@ interface RawgGameInfo {
   released?: string;
 }
 
-function NowPlayingControl({ config, fullWidth = false }: Props) {
+function NowPlayingControl({ config }: Props) {
   const nowPlayingConfig = config.overlays.nowPlaying || {};
   const hasRawgKey = !!config.rawg?.apiKey;
   
@@ -267,7 +266,7 @@ function NowPlayingControl({ config, fullWidth = false }: Props) {
       name: '3D Card',
       description: 'Vinyl Style, Floating',
       color: 'from-blue-500 to-cyan-500',
-      borderColor: 'border-blue-500',
+      borderColor: 'border-accent-blue',
       icon: (
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -294,16 +293,16 @@ function NowPlayingControl({ config, fullWidth = false }: Props) {
     return (
       <div className="flex items-center gap-0 scale-75 origin-left">
         {/* Cover Art */}
-        <div className="relative z-20 w-16 aspect-[9/16] rounded-lg shadow-2xl bg-gray-900 border border-white/10 overflow-hidden">
+        <div className="relative z-20 w-16 aspect-[9/16] rounded-lg shadow-2xl bg-zinc-900 border border-white/10 overflow-hidden">
           <img src={previewCover} alt="Cover" className="w-full h-full object-cover" />
         </div>
         
         {/* Info Block */}
         <div className="relative z-10 -ml-3 pl-6 pr-6 py-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-r-xl h-20 flex flex-col justify-center min-w-[180px]">
-          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 to-purple-600"></div>
-          <span className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 w-fit mb-1">Now Playing</span>
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent-blue to-accent-purple"></div>
+          <span className="text-[8px] font-bold text-accent-blue uppercase tracking-widest bg-accent-blue/10 px-1.5 py-0.5 rounded border border-accent-blue/20 w-fit mb-1">Now Playing</span>
           <h1 className="text-white text-sm font-bold leading-tight truncate">{title || 'Game Title'}</h1>
-          <span className="text-gray-400 text-[10px] font-medium uppercase tracking-wide mt-0.5">{subtitle || 'Mode'}</span>
+          <span className="text-zinc-400 text-[10px] font-medium uppercase tracking-wide mt-0.5">{subtitle || 'Mode'}</span>
         </div>
       </div>
     );
@@ -320,17 +319,17 @@ function NowPlayingControl({ config, fullWidth = false }: Props) {
         </div>
         
         {/* Main Bar */}
-        <div className="flex-1 bg-[#09090b] border-t border-b border-indigo-500/50 relative flex items-center h-16 overflow-hidden rounded-r-xl rounded-bl-xl pl-8 pr-6 min-w-[400px]">
+        <div className="flex-1 bg-[#09090b] border-t border-b border-accent-blue/50 relative flex items-center h-16 overflow-hidden rounded-r-xl rounded-bl-xl pl-8 pr-6 min-w-[400px]">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.5)_0%,transparent_70%)]"></div>
           
           <div className="flex flex-col justify-center relative z-10 flex-1 ml-2">
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
-                <span className="w-0.5 h-2 bg-indigo-500 rounded-sm"></span>
-                <span className="w-0.5 h-2 bg-indigo-500/50 rounded-sm"></span>
-                <span className="w-0.5 h-2 bg-indigo-500/20 rounded-sm"></span>
+                <span className="w-0.5 h-2 bg-accent-blue rounded-sm"></span>
+                <span className="w-0.5 h-2 bg-accent-blue/50 rounded-sm"></span>
+                <span className="w-0.5 h-2 bg-accent-blue/20 rounded-sm"></span>
               </div>
-              <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.15em]">Current</span>
+              <span className="text-accent-blue text-[8px] font-bold uppercase tracking-[0.15em]">Current</span>
             </div>
             <h1 className="text-2xl font-bold text-white uppercase italic tracking-tighter mt-0.5">{title || 'Game Title'}</h1>
           </div>
@@ -344,315 +343,357 @@ function NowPlayingControl({ config, fullWidth = false }: Props) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="card w-full"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
+      {/* Browser Source URL */}
+      <div className="glass-panel p-4 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-semibold">Now Playing</h3>
-            <p className="text-xs sm:text-sm text-gray-400">Game / Music Display</p>
+            <h3 className="text-sm font-medium text-white">Browser Source URL</h3>
+            <p className="text-xs text-zinc-400">Füge diese URL in OBS als Browser Source hinzu</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {autoShowEnabled && nextAutoShow && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-400 font-medium">
-              ⏱ {nextAutoShow}
-            </motion.div>
-          )}
-          {isVisible && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-xs text-green-400 font-medium flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              LIVE
-            </motion.div>
-          )}
+        <div className="flex items-center gap-2 bg-black/40 rounded-lg border border-white/5 px-3 py-2">
+          <code className="text-xs font-mono text-green-400 select-all">/overlay/now-playing</code>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {/* Cover Image Upload */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Cover Image (9:16)
-          </h4>
-          <div className="flex items-start gap-4">
-            <div className="relative group">
-              {cover ? (
-                <img src={cover} alt="Cover" className="w-16 h-28 rounded-lg object-cover border-2 border-blue-500" />
-              ) : (
-                <div className="w-16 h-28 rounded-lg bg-dark-bg border-2 border-dashed border-dark-border flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              )}
-              {cover && (
-                <button onClick={removeCover} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <div className="flex-1">
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" id="cover-upload" />
-              <label htmlFor="cover-upload" className="btn bg-dark-bg border border-dark-border hover:border-blue-500 cursor-pointer inline-flex items-center gap-2 text-sm mb-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Upload Cover
-              </label>
-              <p className="text-xs text-gray-500">Or paste URL:</p>
-              <input
-                type="text"
-                value={cover.startsWith('data:') ? '' : cover}
-                onChange={(e) => setCover(e.target.value)}
-                className="input w-full mt-1 text-xs"
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Auto Game Detection */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-              <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Auto Game Detection
-            </h4>
-            {hasRawgKey && (
-              <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">
-                RAWG ✓
-              </span>
+      {/* Preview Card */}
+      <div className="glass-panel p-6 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Live Preview</h3>
+          <div className="flex items-center gap-2">
+            {autoShowEnabled && nextAutoShow && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-accent-blue/10 border border-accent-blue/20 rounded-full text-xs text-accent-blue font-medium font-mono">
+                ⏱ {nextAutoShow}
+              </motion.div>
+            )}
+            {isVisible && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-xs text-green-500 font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                ON AIR
+              </motion.div>
             )}
           </div>
+        </div>
+        
+        <div className="bg-black/40 rounded-xl p-12 flex items-center justify-center min-h-[200px] relative overflow-hidden border border-white/5 shadow-inner">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
+          {style === 'card' ? renderCardPreview() : renderFullwidthPreview()}
+        </div>
+      </div>
 
-          {/* Info wenn kein RAWG Key */}
-          {!hasRawgKey && (
-            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-3">
-              <p className="text-xs text-blue-400">
-                💡 Optional: Füge einen <span className="font-medium">RAWG API Key</span> in den Settings hinzu für Cover-Bilder und Genre-Infos.
-              </p>
-            </div>
-          )}
-
-          {/* Detection Status */}
-          <div className="flex items-center gap-3 p-3 bg-dark-bg rounded-lg">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${detectedGame ? 'bg-green-500/20' : 'bg-gray-500/20'}`}>
-              {isDetecting || isFetchingRawg ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-purple-500"></div>
-              ) : detectedGame ? (
-                <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Controls */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="glass-panel p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-accent-green/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              ) : (
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-white">
-                {isDetecting ? 'Suche...' : isFetchingRawg ? 'Lade RAWG Daten...' : detectedGame ? detectedGame.gameName : 'Kein Spiel erkannt'}
               </div>
-              <div className="text-xs text-gray-500">
-                {detectedGame ? detectedGame.processName : 'Starte ein Spiel oder aktiviere Auto-Detect'}
+              <h3 className="text-lg font-bold text-white">Content</h3>
+            </div>
+
+            {/* Auto Game Detection */}
+            <div className="p-4 bg-zinc-900/30 rounded-xl border border-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                  Auto Game Detection
+                </h4>
+                {hasRawgKey && (
+                  <span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
+                    RAWG API ACTIVE
+                  </span>
+                )}
               </div>
-            </div>
-            <button
-              onClick={handleManualDetect}
-              disabled={isDetecting || isFetchingRawg}
-              className="btn bg-purple-500/20 border border-purple-500/30 text-purple-400 hover:bg-purple-500/30 text-sm disabled:opacity-50"
-            >
-              {isDetecting || isFetchingRawg ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-400"></div>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Detect
-                </>
+
+              {!hasRawgKey && (
+                <div className="p-3 bg-accent-blue/10 border border-accent-blue/20 rounded-lg">
+                  <p className="text-xs text-accent-blue">
+                    💡 Add a <span className="font-bold">RAWG API Key</span> in Settings to automatically fetch cover art and genres.
+                  </p>
+                </div>
               )}
-            </button>
-          </div>
 
-          {/* Auto Detection Toggle */}
-          <div className="flex items-center justify-between p-3 bg-dark-bg rounded-lg">
-            <div>
-              <div className="font-medium text-sm">Auto-Detect</div>
-              <div className="text-xs text-gray-400">Automatisch Spiel erkennen</div>
-            </div>
-            <button
-              onClick={() => setAutoDetectEnabled(!autoDetectEnabled)}
-              className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${autoDetectEnabled ? 'bg-purple-500' : 'bg-dark-border'}`}
-            >
-              <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ${autoDetectEnabled ? 'translate-x-7' : 'translate-x-0'}`} />
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {autoDetectEnabled && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                <label className="block text-sm mb-2 text-gray-400">
-                  Check alle: <span className="text-white font-medium">{autoDetectInterval}s</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[10, 15, 30, 45, 60, 120].map((secs) => (
-                    <button
-                      key={secs}
-                      onClick={() => setAutoDetectInterval(secs)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${autoDetectInterval === secs ? 'bg-purple-500 text-white' : 'bg-dark-bg text-gray-400 hover:text-white hover:bg-dark-border'}`}
-                    >
-                      {secs}s
-                    </button>
-                  ))}
+              {/* Detection Status */}
+              <div className="flex items-center gap-3 p-3 bg-black/20 rounded-lg border border-white/5">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${detectedGame ? 'bg-green-500/20' : 'bg-zinc-800'}`}>
+                  {isDetecting || isFetchingRawg ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-accent-purple"></div>
+                  ) : detectedGame ? (
+                    <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Title & Subtitle Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Game / Song Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input w-full" placeholder="z.B. Cyberpunk 2077" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Mode / Artist</label>
-            <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className="input w-full" placeholder="z.B. Ranked Mode" />
-          </div>
-        </div>
-
-        {/* Design Style Selection */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
-            </svg>
-            Display Style
-          </h4>
-          <div className="grid grid-cols-1 gap-2">
-            {styles.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setStyle(s.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
-                  style === s.id
-                    ? `bg-dark-card ${s.borderColor} ring-1 ring-opacity-50`
-                    : 'bg-dark-bg border-white/5 hover:border-white/20'
-                }`}
-              >
-                <div className={`p-2 bg-gradient-to-br ${s.color} rounded-lg text-white shadow-lg`}>
-                  {s.icon}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">
+                    {isDetecting ? 'Scanning processes...' : isFetchingRawg ? 'Fetching metadata...' : detectedGame ? detectedGame.gameName : 'No game detected'}
+                  </div>
+                  <div className="text-xs text-zinc-500 truncate">
+                    {detectedGame ? detectedGame.processName : 'Start a game or click Detect'}
+                  </div>
                 </div>
+                <button
+                  onClick={handleManualDetect}
+                  disabled={isDetecting || isFetchingRawg}
+                  className="btn-secondary text-xs py-1.5 px-3"
+                >
+                  {isDetecting || isFetchingRawg ? 'Scanning...' : 'Detect Now'}
+                </button>
+              </div>
+
+              {/* Auto Detection Toggle */}
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-white text-sm font-bold">{s.name}</div>
-                  <div className="text-gray-500 text-xs">{s.description}</div>
+                  <div className="text-sm font-medium text-white">Auto-Detect Loop</div>
+                  <div className="text-xs text-zinc-500">Automatically scan for games</div>
                 </div>
-              </button>
-            ))}
+                <button
+                  onClick={() => setAutoDetectEnabled(!autoDetectEnabled)}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${autoDetectEnabled ? 'bg-accent-purple' : 'bg-zinc-700'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${autoDetectEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {autoDetectEnabled && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                    <label className="label mb-2">Scan Interval (seconds)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[10, 15, 30, 45, 60, 120].map((secs) => (
+                        <button
+                          key={secs}
+                          onClick={() => setAutoDetectInterval(secs)}
+                          className={`px-2 py-1.5 rounded text-xs font-medium transition-all ${
+                            autoDetectInterval === secs 
+                              ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20' 
+                              : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'
+                          }`}
+                        >
+                          {secs}s
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Game / Song Title</label>
+                <input 
+                  type="text" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  className="input w-full" 
+                  placeholder="z.B. Cyberpunk 2077" 
+                />
+              </div>
+              <div>
+                <label className="label">Mode / Artist</label>
+                <input 
+                  type="text" 
+                  value={subtitle} 
+                  onChange={(e) => setSubtitle(e.target.value)} 
+                  className="input w-full" 
+                  placeholder="z.B. Ranked Mode" 
+                />
+              </div>
+            </div>
+
+            {/* Cover Image Upload */}
+            <div className="p-4 bg-zinc-900/30 rounded-xl border border-white/5">
+              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">Cover Art (9:16)</h4>
+              <div className="flex items-start gap-4">
+                <div className="relative group flex-shrink-0">
+                  {cover ? (
+                    <img src={cover} alt="Cover" className="w-16 h-28 rounded-lg object-cover border-2 border-accent-blue shadow-lg shadow-accent-blue/20" />
+                  ) : (
+                    <div className="w-16 h-28 rounded-lg bg-zinc-800/50 border-2 border-dashed border-zinc-700 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  {cover && (
+                    <button onClick={removeCover} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md border-2 border-zinc-900">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" id="cover-upload" />
+                  <label htmlFor="cover-upload" className="btn-secondary text-xs py-2 cursor-pointer inline-flex items-center gap-2 mb-3">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Upload Image
+                  </label>
+                  <div>
+                    <label className="label text-[10px] mb-1">Or paste URL</label>
+                    <input
+                      type="text"
+                      value={cover.startsWith('data:') ? '' : cover}
+                      onChange={(e) => setCover(e.target.value)}
+                      className="input w-full text-xs py-1.5"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Design Style Selection */}
+          <div className="glass-panel p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Style</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {styles.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setStyle(s.id)}
+                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left group relative overflow-hidden ${
+                    style === s.id
+                      ? `bg-zinc-800/80 ${s.borderColor} ring-1 ring-inset ring-white/10`
+                      : 'bg-zinc-900/20 border-white/5 hover:bg-zinc-800/40 hover:border-white/10'
+                  }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-r ${s.color} opacity-0 ${style === s.id ? 'opacity-5' : 'group-hover:opacity-5'} transition-opacity`}></div>
+                  <div className={`p-2.5 bg-gradient-to-br ${s.color} rounded-lg text-white shadow-lg relative z-10`}>
+                    {s.icon}
+                  </div>
+                  <div className="relative z-10">
+                    <div className="text-white text-sm font-bold">{s.name}</div>
+                    <div className="text-zinc-500 text-xs">{s.description}</div>
+                  </div>
+                  {style === s.id && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-accent-blue">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Timing Settings */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border space-y-4">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Timing
-          </h4>
-          
-          <div>
-            <label className="block text-sm mb-2 text-gray-400">
-              Duration: <span className="text-white font-medium">{displayDuration}s</span>
-            </label>
-            <input type="range" min="5" max="60" value={displayDuration} onChange={(e) => setDisplayDuration(parseInt(e.target.value))} className="w-full h-2 bg-dark-border rounded-lg appearance-none cursor-pointer accent-blue-500" />
+        {/* Sidebar Controls */}
+        <div className="space-y-6">
+          {/* Timing Settings */}
+          <div className="glass-panel p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Timing</h3>
+            </div>
+            
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="label">Duration</label>
+                <span className="text-xs font-mono text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded">{displayDuration}s</span>
+              </div>
+              <input 
+                type="range" 
+                min="5" 
+                max="60" 
+                value={displayDuration} 
+                onChange={(e) => setDisplayDuration(parseInt(e.target.value))} 
+                className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-accent-blue" 
+              />
+            </div>
+
+            <div className="pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="font-bold text-sm text-white">Auto-Show</div>
+                  <div className="text-xs text-zinc-500">Repeat periodically</div>
+                </div>
+                <button
+                  onClick={() => setAutoShowEnabled(!autoShowEnabled)}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${autoShowEnabled ? 'bg-accent-blue' : 'bg-zinc-700'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${autoShowEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {autoShowEnabled && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                    <label className="label mb-2">Interval (minutes)</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[1, 5, 10, 15, 20, 30, 45, 60].map((mins) => (
+                        <button
+                          key={mins}
+                          onClick={() => setAutoShowInterval(mins)}
+                          className={`px-2 py-1.5 rounded text-xs font-medium transition-all ${
+                            autoShowInterval === mins 
+                              ? 'bg-accent-blue text-white shadow-lg shadow-accent-blue/20' 
+                              : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'
+                          }`}
+                        >
+                          {mins}m
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-dark-bg rounded-lg">
-            <div>
-              <div className="font-medium text-sm">Auto-Show</div>
-              <div className="text-xs text-gray-400">Show at regular intervals</div>
-            </div>
-            <button
-              onClick={() => setAutoShowEnabled(!autoShowEnabled)}
-              className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${autoShowEnabled ? 'bg-blue-500' : 'bg-dark-border'}`}
+          {/* Action Buttons */}
+          <div className="glass-panel p-4 space-y-3">
+            <button 
+              onClick={handleShow} 
+              disabled={!title} 
+              className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm"
             >
-              <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ${autoShowEnabled ? 'translate-x-7' : 'translate-x-0'}`} />
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              Show Overlay
+            </button>
+            <button 
+              onClick={handleHide} 
+              className="btn-danger w-full flex items-center justify-center gap-2 py-3 text-sm"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" /></svg>
+              Hide Overlay
             </button>
           </div>
-
-          <AnimatePresence>
-            {autoShowEnabled && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                <label className="block text-sm mb-2 text-gray-400">
-                  Interval: <span className="text-white font-medium">{autoShowInterval} min</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[1, 5, 10, 15, 20, 30, 45, 60].map((mins) => (
-                    <button
-                      key={mins}
-                      onClick={() => setAutoShowInterval(mins)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${autoShowInterval === mins ? 'bg-blue-500 text-white' : 'bg-dark-bg text-gray-400 hover:text-white hover:bg-dark-border'}`}
-                    >
-                      {mins}m
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Preview */}
-        <div className="p-4 bg-[#0a0a0a] rounded-lg border border-dark-border overflow-hidden">
-          <p className="text-xs text-gray-500 mb-3">Preview:</p>
-          <div className="min-h-[100px] flex items-center overflow-hidden">
-            {style === 'card' ? renderCardPreview() : renderFullwidthPreview()}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button onClick={handleShow} disabled={!title} className="btn flex-1 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            Launch
-          </button>
-          <button onClick={handleHide} className="btn bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" /></svg>
-            Stop
-          </button>
-        </div>
-
-        {/* Browser Source Info */}
-        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <p className="text-xs text-gray-400">
-            <span className="font-medium text-blue-400">OBS Browser Source:</span><br />
-            <code className="text-gray-300 select-all text-[10px] sm:text-xs break-all">http://localhost:3000/overlay/now-playing</code>
-            <span className="text-gray-500 ml-1 sm:ml-2 text-[10px] sm:text-xs">(1920x1080)</span>
-          </p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

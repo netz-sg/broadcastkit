@@ -5,7 +5,6 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
-  fullWidth?: boolean;
 }
 
 interface SocialLink {
@@ -27,7 +26,7 @@ const platformConfig = {
   twitch: { icon: 'twitch', color: 'text-purple-400', bgColor: 'bg-purple-600', label: 'Twitch' },
 };
 
-function SocialWidgetControl({ config, fullWidth = false }: Props) {
+function SocialWidgetControl({ config }: Props) {
   const socialConfig = config.overlays.socialWidget || {};
   
   const [links, setLinks] = useState<SocialLink[]>(socialConfig.links || [
@@ -186,7 +185,7 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
   const renderPreview = () => {
     if (enabledLinks.length === 0) {
       return (
-        <div className="text-center text-gray-500 text-sm py-4">
+        <div className="text-center text-zinc-500 text-sm py-4">
           Aktiviere mindestens einen Social Link
         </div>
       );
@@ -208,7 +207,7 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
               {renderIcon(currentLink.platform, 'w-5 h-5')}
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Follow Me</span>
+              <span className="text-[9px] text-zinc-400 uppercase tracking-widest font-bold">Follow Me</span>
               <span className="text-white font-bold text-sm leading-none">{currentLink.label}</span>
             </div>
           </motion.div>
@@ -225,7 +224,7 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
             <div className={`w-12 ${pConfig.bgColor} flex items-center justify-center text-white`} style={{ clipPath: 'polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%)' }}>
               {renderIcon(currentLink.platform, 'w-5 h-5')}
             </div>
-            <div className="flex-1 bg-slate-900 border-t-2 border-b-2 border-r-2 border-orange-500/50 flex flex-col justify-center pl-5 pr-3 -ml-3 rounded-r-md relative">
+            <div className="flex-1 bg-zinc-900 border-t-2 border-b-2 border-r-2 border-orange-500/50 flex flex-col justify-center pl-5 pr-3 -ml-3 rounded-r-md relative">
               <span className="text-[9px] text-orange-400 uppercase font-black tracking-widest">Social Media</span>
               <span className="text-white font-bold text-base tracking-tight leading-none">{currentLink.label}</span>
             </div>
@@ -249,7 +248,7 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-sm animate-pulse"></span>
-                    <span className="text-[8px] text-gray-500 uppercase tracking-[0.15em] font-bold">Connect</span>
+                    <span className="text-[8px] text-zinc-500 uppercase tracking-[0.15em] font-bold">Connect</span>
                   </div>
                   <span className="text-white font-bold text-lg uppercase tracking-tighter">{currentLink.label}</span>
                 </div>
@@ -261,170 +260,199 @@ function SocialWidgetControl({ config, fullWidth = false }: Props) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="card w-full"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
+      {/* Browser Source URL */}
+      <div className="glass-panel p-4 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-semibold">Social Widget</h3>
-            <p className="text-xs sm:text-sm text-gray-400">Rotierende Social Links</p>
+            <h3 className="text-sm font-medium text-white">Browser Source URL</h3>
+            <p className="text-xs text-zinc-400">Füge diese URL in OBS als Browser Source hinzu</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {isRunning && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full text-xs text-green-400 font-medium flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              RUNNING
-            </motion.div>
-          )}
+        <div className="flex items-center gap-2 bg-black/40 rounded-lg border border-white/5 px-3 py-2">
+          <code className="text-xs font-mono text-pink-400 select-all">/overlay/social-widget</code>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {/* Social Links Editor */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            Social Links
-          </h4>
-          <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2">
-            {links.map((link) => {
-              const pConfig = platformConfig[link.platform];
-              return (
-                <div key={link.id} className={`flex items-center gap-3 p-2 rounded-lg transition-all ${link.enabled ? 'bg-dark-bg' : 'bg-dark-bg/50 opacity-50'}`}>
-                  <button
-                    onClick={() => updateLink(link.id, 'enabled', !link.enabled)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${link.enabled ? pConfig.bgColor + ' text-white' : 'bg-dark-border text-gray-500'}`}
-                  >
-                    {renderIcon(link.platform, 'w-4 h-4')}
-                  </button>
-                  <input
-                    type="text"
-                    value={link.label}
-                    onChange={(e) => updateLink(link.id, 'label', e.target.value)}
-                    className="input flex-1 text-sm py-1.5"
-                    placeholder={pConfig.label}
-                    disabled={!link.enabled}
-                  />
-                  <button
-                    onClick={() => updateLink(link.id, 'enabled', !link.enabled)}
-                    className={`w-10 h-6 rounded-full transition-all flex-shrink-0 ${link.enabled ? 'bg-pink-500' : 'bg-dark-border'}`}
-                  >
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform ${link.enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-gray-500 mt-3">
-            {enabledLinks.length} von {links.length} aktiv
-          </p>
-        </div>
-
-        {/* Design Style Selection */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            Design Style
-          </h4>
-          <div className="grid grid-cols-1 gap-2">
-            {styles.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setStyle(s.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
-                  style === s.id
-                    ? `bg-dark-card ${s.borderColor} ring-1 ring-opacity-50`
-                    : 'bg-dark-bg border-white/5 hover:border-white/20'
-                }`}
-              >
-                <div className={`p-2 bg-gradient-to-br ${s.color} rounded-lg text-white shadow-lg`}>
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                </div>
-                <div>
-                  <div className="text-white text-sm font-bold">{s.name}</div>
-                  <div className="text-gray-500 text-xs">{s.description}</div>
-                </div>
-              </button>
-            ))}
+      {/* Preview Card */}
+      <div className="glass-panel p-6 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Live Preview</h3>
+          <div className="flex items-center gap-2">
+            {isRunning && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-xs text-green-500 font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                ON AIR
+              </motion.div>
+            )}
           </div>
         </div>
+        
+        <div className="bg-black/40 rounded-xl p-12 flex items-center justify-center min-h-[200px] relative overflow-hidden border border-white/5 shadow-inner">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
+          <AnimatePresence mode="wait">
+            {renderPreview()}
+          </AnimatePresence>
+        </div>
+      </div>
 
-        {/* Timing */}
-        <div className="p-4 bg-dark-hover/50 rounded-lg border border-dark-border">
-          <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Anzeigedauer pro Link
-          </h4>
-          <div>
-            <label className="block text-sm mb-2 text-gray-400">
-              Duration: <span className="text-white font-medium">{displayDuration}s</span>
-            </label>
-            <input
-              type="range"
-              min="2"
-              max="15"
-              value={displayDuration}
-              onChange={(e) => setDisplayDuration(parseInt(e.target.value))}
-              className="w-full h-2 bg-dark-border rounded-lg appearance-none cursor-pointer accent-pink-500"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>2s</span>
-              <span>15s</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Controls */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Social Links Editor */}
+          <div className="glass-panel p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Social Links</h3>
+            </div>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {links.map((link) => {
+                const pConfig = platformConfig[link.platform];
+                return (
+                  <div key={link.id} className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${link.enabled ? 'bg-zinc-900/50 border-white/10' : 'bg-zinc-900/20 border-transparent opacity-60 hover:opacity-100'}`}>
+                    <button
+                      onClick={() => updateLink(link.id, 'enabled', !link.enabled)}
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${link.enabled ? pConfig.bgColor + ' text-white shadow-lg' : 'bg-zinc-800 text-zinc-500'}`}
+                    >
+                      {renderIcon(link.platform, 'w-5 h-5')}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={link.label}
+                        onChange={(e) => updateLink(link.id, 'label', e.target.value)}
+                        className="bg-transparent border-none text-sm text-white placeholder-zinc-600 focus:ring-0 w-full p-0"
+                        placeholder={pConfig.label}
+                        disabled={!link.enabled}
+                      />
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium mt-0.5">{pConfig.label}</div>
+                    </div>
+                    <button
+                      onClick={() => updateLink(link.id, 'enabled', !link.enabled)}
+                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${link.enabled ? 'bg-accent-blue' : 'bg-zinc-700'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${link.enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+              <p className="text-xs text-zinc-500">
+                <span className="text-white font-medium">{enabledLinks.length}</span> active links
+              </p>
+              <p className="text-xs text-zinc-600">Drag to reorder (Coming Soon)</p>
+            </div>
+          </div>
+
+          {/* Design Style Selection */}
+          <div className="glass-panel p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Style</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {styles.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setStyle(s.id)}
+                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left group relative overflow-hidden ${
+                    style === s.id
+                      ? `bg-zinc-800/80 ${s.borderColor} ring-1 ring-inset ring-white/10`
+                      : 'bg-zinc-900/20 border-white/5 hover:bg-zinc-800/40 hover:border-white/10'
+                  }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-r ${s.color} opacity-0 ${style === s.id ? 'opacity-5' : 'group-hover:opacity-5'} transition-opacity`}></div>
+                  <div className={`p-2.5 bg-gradient-to-br ${s.color} rounded-lg text-white shadow-lg relative z-10`}>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                  </div>
+                  <div className="relative z-10">
+                    <div className="text-white text-sm font-bold">{s.name}</div>
+                    <div className="text-zinc-500 text-xs">{s.description}</div>
+                  </div>
+                  {style === s.id && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-accent-blue">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Preview */}
-        <div className="p-4 bg-[#0a0a0a] rounded-lg border border-dark-border overflow-hidden">
-          <p className="text-xs text-gray-500 mb-3">Preview (rotiert alle {displayDuration}s):</p>
-          <div className="min-h-[60px] flex items-center">
-            <AnimatePresence mode="wait">
-              {renderPreview()}
-            </AnimatePresence>
+        {/* Sidebar Controls */}
+        <div className="space-y-6">
+          {/* Timing Settings */}
+          <div className="glass-panel p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Timing</h3>
+            </div>
+            
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="label">Duration per Link</label>
+                <span className="text-xs font-mono text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded">{displayDuration}s</span>
+              </div>
+              <input 
+                type="range" 
+                min="2" 
+                max="15" 
+                value={displayDuration} 
+                onChange={(e) => setDisplayDuration(parseInt(e.target.value))} 
+                className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-accent-blue" 
+              />
+              <div className="flex justify-between text-[10px] text-zinc-600 mt-2 font-mono">
+                <span>FAST (2s)</span>
+                <span>SLOW (15s)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="glass-panel p-4 space-y-3">
+            <button 
+              onClick={handleStart} 
+              disabled={enabledLinks.length === 0}
+              className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              Start Widget
+            </button>
+            <button 
+              onClick={handleStop} 
+              className="btn-danger w-full flex items-center justify-center gap-2 py-3 text-sm"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" /></svg>
+              Stop Widget
+            </button>
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleStart}
-            disabled={enabledLinks.length === 0}
-            className="btn flex-1 disabled:opacity-50 disabled:cursor-not-allowed bg-pink-600 hover:bg-pink-500 text-white shadow-lg shadow-pink-500/20"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            Start Widget
-          </button>
-          <button onClick={handleStop} className="btn bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" /></svg>
-            Stop
-          </button>
-        </div>
-
-        {/* Browser Source Info */}
-        <div className="p-3 bg-pink-500/10 border border-pink-500/20 rounded-lg">
-          <p className="text-xs text-gray-400">
-            <span className="font-medium text-pink-400">OBS Browser Source:</span><br />
-            <code className="text-gray-300 select-all text-[10px] sm:text-xs break-all">http://localhost:3000/overlay/social-widget</code>
-            <span className="text-gray-500 ml-1 sm:ml-2 text-[10px] sm:text-xs">(400x100)</span>
-          </p>
-        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

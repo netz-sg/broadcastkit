@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
-  fullWidth?: boolean;
 }
 
 interface ReactionSource {
@@ -45,7 +44,7 @@ const platformIcons = {
   ),
 };
 
-function ReactionControl({ config, fullWidth = false }: Props) {
+function ReactionControl({ config }: Props) {
   const reactionConfig = config.overlays?.reaction || {
     sources: [],
     activeSourceId: '',
@@ -375,6 +374,7 @@ function ReactionControl({ config, fullWidth = false }: Props) {
   // Preview Component
   const renderPreview = () => {
     const preview = activeSource || {
+      id: 'preview',
       name: 'Creator Name',
       channelName: '@channel',
       channelAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=React',
@@ -420,41 +420,107 @@ function ReactionControl({ config, fullWidth = false }: Props) {
   };
 
   return (
-    <div className="space-y-4 w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white">Reaction Overlay</h2>
-          <p className="text-sm text-gray-400">Zeige an, auf welches Video du reagierst</p>
+    <div className="h-full flex flex-col gap-6">
+      {/* Browser Source URL */}
+      <div className="glass-panel p-4 flex items-center justify-between bg-black/20">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-white">Browser Source URL</h3>
+            <p className="text-xs text-zinc-400">Füge diese URL in OBS als Browser Source hinzu</p>
+          </div>
         </div>
-        {isVisible && (
-          <span className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            <span className="text-red-400 text-sm font-medium">Live</span>
-          </span>
-        )}
+        <div className="flex items-center gap-2 bg-black/40 rounded-lg border border-white/5 px-3 py-2">
+          <code className="text-xs font-mono text-red-400 select-all">/overlay/reaction</code>
+        </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left Column - Sources */}
-        <div className="space-y-4">
-          {/* Source List */}
-          <div className="card">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        {/* Left Column: Preview & Actions */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+          {/* Preview Area */}
+          <div className="glass-panel p-6 rounded-2xl border border-white/10 relative overflow-hidden flex-1 min-h-[300px] flex flex-col">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+            <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+            
+            <div className="relative z-10 flex-1 flex items-center justify-center">
+              <div className="transform scale-110 transition-transform">
+                {renderPreview()}
+              </div>
+            </div>
+
+            {/* Live Indicator */}
+            {isVisible && (
+              <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full z-20">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                <span className="text-xs font-medium text-red-400 tracking-wide">LIVE</span>
+              </div>
+            )}
+          </div>
+
+          {/* Overlay Controls */}
+          <div className="grid grid-cols-3 gap-4">
+            {overlayTypes.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => triggerShow(type.id)}
+                disabled={!activeSource}
+                className={`relative p-4 rounded-xl border transition-all duration-200 text-left group overflow-hidden ${
+                  activeOverlay === type.id
+                    ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                    : 'glass-panel border-white/5 hover:bg-zinc-800/50 hover:border-white/10 disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
+              >
+                <div className={`mb-3 p-2 rounded-lg w-fit ${
+                  activeOverlay === type.id ? 'bg-indigo-500 text-white' : 'bg-zinc-800 text-zinc-400'
+                }`}>
+                  {type.icon}
+                </div>
+                <div className="font-medium text-sm text-zinc-200">{type.name}</div>
+                <div className="text-xs text-zinc-500 mt-1">{type.description}</div>
+              </button>
+            ))}
+          </div>
+
+          {isVisible && (
+            <button
+              onClick={triggerHide}
+              className="w-full py-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/50 text-red-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 group"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              Overlay Ausblenden
+            </button>
+          )}
+        </div>
+
+        {/* Right Column: Settings & Sources */}
+        <div className="lg:col-span-5 space-y-6 flex flex-col">
+          {/* Sources List */}
+          <div className="glass-panel p-6 rounded-2xl border border-white/10 flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-white">Gespeicherte Quellen</h3>
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Quellen
+              </h3>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-blue/20 hover:bg-accent-blue/30 text-accent-blue border border-accent-blue/30 rounded-lg text-sm font-medium transition-all"
+                className="p-2 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Hinzufügen
               </button>
             </div>
 
-            {/* Add Source Form */}
+            {/* Add Form */}
             <AnimatePresence>
               {showAddForm && (
                 <motion.div
@@ -463,14 +529,14 @@ function ReactionControl({ config, fullWidth = false }: Props) {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden mb-4"
                 >
-                  <div className="p-4 bg-dark-hover rounded-lg border border-white/5 space-y-3">
+                  <div className="p-4 bg-zinc-900/50 rounded-xl border border-white/10 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Plattform</label>
+                        <label className="block text-xs text-zinc-400 mb-1">Plattform</label>
                         <select
                           value={newSource.platform}
                           onChange={(e) => setNewSource(prev => ({ ...prev, platform: e.target.value as any }))}
-                          className="w-full bg-dark-card border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
+                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
                         >
                           <option value="youtube">YouTube</option>
                           <option value="twitch">Twitch</option>
@@ -479,110 +545,68 @@ function ReactionControl({ config, fullWidth = false }: Props) {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Bezeichnung</label>
+                        <label className="block text-xs text-zinc-400 mb-1">Bezeichnung</label>
                         <input
                           type="text"
                           value={newSource.name || ''}
                           onChange={(e) => setNewSource(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="z.B. MrBeast Reaction"
-                          className="w-full bg-dark-card border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
+                          placeholder="z.B. MrBeast"
+                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
                         />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Kanal-Name</label>
+                        <label className="block text-xs text-zinc-400 mb-1">Kanal-Name</label>
                         <input
                           type="text"
                           value={newSource.channelName || ''}
                           onChange={(e) => setNewSource(prev => ({ ...prev, channelName: e.target.value }))}
                           placeholder="@MrBeast"
-                          className="w-full bg-dark-card border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
+                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Video-Titel</label>
+                        <label className="block text-xs text-zinc-400 mb-1">Video-Titel</label>
                         <input
                           type="text"
                           value={newSource.videoTitle || ''}
                           onChange={(e) => setNewSource(prev => ({ ...prev, videoTitle: e.target.value }))}
-                          placeholder="$1,000,000 Challenge"
-                          className="w-full bg-dark-card border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
+                          placeholder="Video Titel"
+                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Kanal-Avatar</label>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                          className="hidden"
-                        />
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 bg-dark-card border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-gray-400 text-sm transition-all"
-                        >
-                          {newSource.channelAvatar ? (
-                            <>
-                              <img src={newSource.channelAvatar} className="w-5 h-5 rounded-full" />
-                              <span className="text-white">Bild gewählt</span>
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <span>Bild hochladen</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Video-Thumbnail</label>
-                        <input
-                          ref={thumbnailInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleThumbnailUpload}
-                          className="hidden"
-                        />
-                        <button
-                          onClick={() => thumbnailInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 bg-dark-card border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-gray-400 text-sm transition-all"
-                        >
-                          {newSource.videoThumbnail ? (
-                            <>
-                              <img src={newSource.videoThumbnail} className="w-8 h-5 rounded object-cover" />
-                              <span className="text-white">Thumbnail gewählt</span>
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                              <span>Thumbnail</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-zinc-400 text-sm transition-all"
+                      >
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                        {newSource.channelAvatar ? <span className="text-green-400">Avatar OK</span> : <span>Avatar Upload</span>}
+                      </button>
+                      <button
+                        onClick={() => thumbnailInputRef.current?.click()}
+                        className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-zinc-400 text-sm transition-all"
+                      >
+                        <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailUpload} className="hidden" />
+                        {newSource.videoThumbnail ? <span className="text-green-400">Thumb OK</span> : <span>Thumb Upload</span>}
+                      </button>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
                       <button
                         onClick={() => setShowAddForm(false)}
-                        className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
+                        className="px-3 py-1.5 text-zinc-400 hover:text-white text-sm"
                       >
                         Abbrechen
                       </button>
                       <button
                         onClick={addSource}
                         disabled={!newSource.name || !newSource.channelName}
-                        className="px-4 py-2 bg-accent-blue hover:bg-accent-blue/80 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-all"
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
                       >
                         Speichern
                       </button>
@@ -592,37 +616,29 @@ function ReactionControl({ config, fullWidth = false }: Props) {
               )}
             </AnimatePresence>
 
-            {/* Source List */}
-            {sources.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p className="text-sm">Keine Quellen vorhanden</p>
-                <p className="text-xs mt-1">Füge eine Reaction-Quelle hinzu</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {sources.map((source) => (
+            {/* List */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar min-h-[200px]">
+              {sources.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500">
+                  <p className="text-sm">Keine Quellen vorhanden</p>
+                </div>
+              ) : (
+                sources.map((source) => (
                   <div
                     key={source.id}
                     onClick={() => setActiveSourceId(source.id)}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                       activeSourceId === source.id
-                        ? 'bg-accent-blue/20 border border-accent-blue/30'
-                        : 'bg-dark-hover hover:bg-dark-hover/80 border border-transparent'
+                        ? 'bg-indigo-500/10 border-indigo-500/30'
+                        : 'bg-zinc-900/30 border-transparent hover:bg-zinc-900/50'
                     }`}
                   >
                     <div className="relative flex-shrink-0">
                       {source.channelAvatar ? (
-                        <img 
-                          src={source.channelAvatar} 
-                          alt={source.name} 
-                          className="w-10 h-10 rounded-full object-cover" 
-                        />
+                        <img src={source.channelAvatar} alt="" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{source.name.charAt(0)}</span>
+                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">
+                          {source.name.charAt(0)}
                         </div>
                       )}
                       <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
@@ -630,441 +646,77 @@ function ReactionControl({ config, fullWidth = false }: Props) {
                         source.platform === 'twitch' ? 'bg-purple-600' :
                         source.platform === 'tiktok' ? 'bg-black' : 'bg-black'
                       }`}>
-                        <span className="scale-75">{platformIcons[source.platform]}</span>
+                        <span className="scale-75 text-white">{platformIcons[source.platform]}</span>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-white text-sm font-medium truncate">{source.name}</div>
-                      <div className="text-gray-400 text-xs truncate">{source.channelName}</div>
+                      <div className="text-zinc-400 text-xs truncate">{source.channelName}</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditing(source);
-                        }}
-                        className="p-1.5 text-gray-500 hover:text-accent-blue transition-colors"
-                        title="Bearbeiten"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeSource(source.id);
-                        }}
-                        className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
-                        title="Löschen"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removeSource(source.id); }}
+                      className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Edit Source Modal */}
-            <AnimatePresence>
-              {editingSourceId && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                  onClick={cancelEditing}
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-dark-card border border-white/10 rounded-xl p-6 max-w-md w-full space-y-4"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <h3 className="text-lg font-semibold text-white">Quelle bearbeiten</h3>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Plattform</label>
-                        <select
-                          value={editSource.platform || 'youtube'}
-                          onChange={(e) => setEditSource(prev => ({ ...prev, platform: e.target.value as any }))}
-                          className="w-full bg-dark-hover border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
-                        >
-                          <option value="youtube">YouTube</option>
-                          <option value="twitch">Twitch</option>
-                          <option value="tiktok">TikTok</option>
-                          <option value="twitter">X / Twitter</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Bezeichnung</label>
-                        <input
-                          type="text"
-                          value={editSource.name || ''}
-                          onChange={(e) => setEditSource(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full bg-dark-hover border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Kanal-Name</label>
-                        <input
-                          type="text"
-                          value={editSource.channelName || ''}
-                          onChange={(e) => setEditSource(prev => ({ ...prev, channelName: e.target.value }))}
-                          className="w-full bg-dark-hover border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Video-Titel</label>
-                        <input
-                          type="text"
-                          value={editSource.videoTitle || ''}
-                          onChange={(e) => setEditSource(prev => ({ ...prev, videoTitle: e.target.value }))}
-                          className="w-full bg-dark-hover border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent-blue/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Kanal-Avatar</label>
-                        <input
-                          ref={editAvatarInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleEditAvatarUpload}
-                          className="hidden"
-                        />
-                        <button
-                          onClick={() => editAvatarInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 bg-dark-hover border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-gray-400 text-sm transition-all"
-                        >
-                          {editSource.channelAvatar ? (
-                            <>
-                              <img src={editSource.channelAvatar} className="w-5 h-5 rounded-full" />
-                              <span className="text-white">Ändern</span>
-                            </>
-                          ) : (
-                            <span>Bild hochladen</span>
-                          )}
-                        </button>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Video-Thumbnail</label>
-                        <input
-                          ref={editThumbnailInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleEditThumbnailUpload}
-                          className="hidden"
-                        />
-                        <button
-                          onClick={() => editThumbnailInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 bg-dark-hover border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-gray-400 text-sm transition-all"
-                        >
-                          {editSource.videoThumbnail ? (
-                            <>
-                              <img src={editSource.videoThumbnail} className="w-8 h-5 rounded object-cover" />
-                              <span className="text-white">Ändern</span>
-                            </>
-                          ) : (
-                            <span>Thumbnail</span>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                      <button
-                        onClick={cancelEditing}
-                        className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
-                      >
-                        Abbrechen
-                      </button>
-                      <button
-                        onClick={saveEditedSource}
-                        disabled={!editSource.name || !editSource.channelName}
-                        className="px-4 py-2 bg-accent-blue hover:bg-accent-blue/80 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-all"
-                      >
-                        Speichern
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
+                ))
               )}
-            </AnimatePresence>
+            </div>
           </div>
 
           {/* Settings */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-white mb-4">Einstellungen</h3>
+          <div className="glass-panel p-6 rounded-2xl border border-white/10">
+            <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Einstellungen</h3>
             
-            {/* Style Selection */}
-            <div className="mb-4">
-              <label className="block text-xs text-gray-400 mb-2">Design-Stil</label>
-              <div className="grid grid-cols-3 gap-2">
-                {styles.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setStyle(s.id)}
-                    className={`p-3 rounded-lg border transition-all ${
-                      style === s.id
-                        ? `bg-gradient-to-br ${s.color} border-white/20`
-                        : 'bg-dark-hover border-white/5 hover:border-white/10'
-                    }`}
+            <div className="space-y-4">
+              {/* Style & Position */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-2">Stil</label>
+                  <select
+                    value={style}
+                    onChange={(e) => setStyle(e.target.value as StyleType)}
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
                   >
-                    <div className="text-white text-xs font-medium">{s.name}</div>
-                    <div className="text-gray-400 text-[10px]">{s.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Position Selection */}
-            <div className="mb-4">
-              <label className="block text-xs text-gray-400 mb-2">Position</label>
-              <div className="grid grid-cols-2 gap-2">
-                {positions.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPosition(p.id as PositionType)}
-                    className={`px-3 py-2 rounded-lg border text-xs transition-all ${
-                      position === p.id
-                        ? 'bg-accent-blue/20 border-accent-blue/30 text-white'
-                        : 'bg-dark-hover border-white/5 text-gray-400 hover:text-white'
-                    }`}
+                    {styles.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-2">Position</label>
+                  <select
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value as PositionType)}
+                    className="w-full bg-zinc-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
                   >
-                    {p.label}
-                  </button>
-                ))}
+                    {positions.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  </select>
+                </div>
               </div>
-            </div>
 
-            {/* Toggle Options */}
-            <div className="space-y-3">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm text-gray-300">Kanal-Info anzeigen</span>
-                <div className="relative">
+              {/* Toggles */}
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showChannelInfo}
                     onChange={(e) => setShowChannelInfo(e.target.checked)}
-                    className="sr-only"
+                    className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500/50"
                   />
-                  <div className={`w-10 h-6 rounded-full transition-colors ${showChannelInfo ? 'bg-accent-blue' : 'bg-gray-600'}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${showChannelInfo ? 'translate-x-5' : 'translate-x-1'}`}></div>
-                  </div>
-                </div>
-              </label>
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm text-gray-300">Video-Titel anzeigen</span>
-                <div className="relative">
+                  <span className="text-sm text-zinc-300">Kanal-Info</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showVideoTitle}
                     onChange={(e) => setShowVideoTitle(e.target.checked)}
-                    className="sr-only"
+                    className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-500/50"
                   />
-                  <div className={`w-10 h-6 rounded-full transition-colors ${showVideoTitle ? 'bg-accent-blue' : 'bg-gray-600'}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${showVideoTitle ? 'translate-x-5' : 'translate-x-1'}`}></div>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Timer Settings */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-white mb-4">Timer & Wiederholung</h3>
-            
-            {/* Permanent Toggle */}
-            <div className="mb-4">
-              <label className="flex items-center justify-between cursor-pointer p-3 bg-dark-hover rounded-lg">
-                <div>
-                  <span className="text-sm text-white font-medium">Dauerhaft einblenden</span>
-                  <p className="text-xs text-gray-500">Overlay bleibt bis manuell ausgeblendet</p>
-                </div>
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={isPermanent}
-                    onChange={(e) => setIsPermanent(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-10 h-6 rounded-full transition-colors ${isPermanent ? 'bg-accent-green' : 'bg-gray-600'}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${isPermanent ? 'translate-x-5' : 'translate-x-1'}`}></div>
-                  </div>
-                </div>
-              </label>
-            </div>
-
-            {/* Display Duration (only if not permanent) */}
-            {!isPermanent && (
-              <div className="mb-4">
-                <label className="block text-xs text-gray-400 mb-2">Anzeigedauer (Sekunden)</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="3"
-                    max="60"
-                    value={displayDuration || 10}
-                    onChange={(e) => setDisplayDuration(parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent-blue"
-                  />
-                  <span className="text-white font-mono text-sm w-12 text-right">{displayDuration || 10}s</span>
-                </div>
+                  <span className="text-sm text-zinc-300">Video-Titel</span>
+                </label>
               </div>
-            )}
-
-            {/* Repeat Settings */}
-            <div className="border-t border-white/5 pt-4 mt-4">
-              <label className="flex items-center justify-between cursor-pointer mb-3">
-                <div>
-                  <span className="text-sm text-white font-medium">Wiederholung aktivieren</span>
-                  <p className="text-xs text-gray-500">Overlay automatisch wiederholen</p>
-                </div>
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={repeatEnabled}
-                    onChange={(e) => setRepeatEnabled(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-10 h-6 rounded-full transition-colors ${repeatEnabled ? 'bg-accent-purple' : 'bg-gray-600'}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${repeatEnabled ? 'translate-x-5' : 'translate-x-1'}`}></div>
-                  </div>
-                </div>
-              </label>
-
-              {repeatEnabled && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-3"
-                >
-                  {/* Repeat Interval */}
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-2">Wiederholungsintervall (Sekunden)</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="10"
-                        max="300"
-                        step="5"
-                        value={repeatInterval}
-                        onChange={(e) => setRepeatInterval(parseInt(e.target.value))}
-                        className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent-purple"
-                      />
-                      <span className="text-white font-mono text-sm w-16 text-right">{repeatInterval}s</span>
-                    </div>
-                  </div>
-
-                  {/* Repeat Count */}
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-2">Anzahl Wiederholungen</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[0, 3, 5, 10].map((count) => (
-                        <button
-                          key={count}
-                          onClick={() => setRepeatCount(count)}
-                          className={`px-3 py-2 rounded-lg border text-xs transition-all ${
-                            repeatCount === count
-                              ? 'bg-accent-purple/20 border-accent-purple/30 text-white'
-                              : 'bg-dark-hover border-white/5 text-gray-400 hover:text-white'
-                          }`}
-                        >
-                          {count === 0 ? '∞' : `${count}x`}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {repeatCount === 0 ? 'Unendlich wiederholen' : `${repeatCount} mal wiederholen`}
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Preview & Controls */}
-        <div className="space-y-4">
-          {/* Preview */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-white mb-4">Vorschau</h3>
-            <div className="bg-gradient-to-br from-gray-900 to-black p-6 rounded-lg border border-white/5 min-h-[120px] flex items-center justify-center">
-              {renderPreview()}
-            </div>
-          </div>
-
-          {/* Overlay Type Buttons */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-white mb-4">Overlay anzeigen</h3>
-            <div className="grid grid-cols-1 gap-3">
-              {overlayTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => triggerShow(type.id)}
-                  disabled={!activeSource}
-                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                    activeOverlay === type.id
-                      ? 'bg-accent-green/20 border-accent-green/30'
-                      : 'bg-dark-hover border-white/5 hover:border-white/10 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
-                >
-                  <div className={`p-3 rounded-lg ${activeOverlay === type.id ? 'bg-accent-green/20 text-accent-green' : 'bg-white/5 text-gray-400'}`}>
-                    {type.icon}
-                  </div>
-                  <div className="text-left">
-                    <div className="text-white font-medium">{type.name}</div>
-                    <div className="text-gray-400 text-xs">{type.description}</div>
-                  </div>
-                  {activeOverlay === type.id && (
-                    <div className="ml-auto">
-                      <span className="flex items-center gap-1.5 px-2 py-1 bg-accent-green/20 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse"></span>
-                        <span className="text-accent-green text-xs">Aktiv</span>
-                      </span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Hide Button */}
-            {isVisible && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={triggerHide}
-                className="w-full mt-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-xl font-medium transition-all"
-              >
-                Overlay ausblenden
-              </motion.button>
-            )}
-          </div>
-
-          {/* Browser Sources Info */}
-          <div className="card bg-gradient-to-br from-dark-card to-dark-hover">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Browser Source</h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded-lg">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                <code className="text-gray-300">:3000/overlay/reaction</code>
-                <span className="text-gray-500 ml-auto">Alle Layouts</span>
-              </div>
-              <p className="text-gray-500 text-xs mt-2">
-                Ein Overlay für alle Layouts (Badge, Banner, PiP). Wähle oben das gewünschte Layout.
-              </p>
             </div>
           </div>
         </div>
