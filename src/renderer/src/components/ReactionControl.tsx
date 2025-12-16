@@ -238,8 +238,9 @@ function ReactionControl({ config }: Props) {
     }
   };
 
-  const triggerShow = (overlayType: OverlayType) => {
-    if (!activeSource) return;
+  const triggerShow = (overlayType: OverlayType, sourceOverride?: ReactionSource) => {
+    const sourceToUse = sourceOverride || activeSource;
+    if (!sourceToUse) return;
     
     // Stop any existing repeat timer
     if (repeatTimerRef.current) {
@@ -255,13 +256,14 @@ function ReactionControl({ config }: Props) {
         payload: {
           layout: overlayType,
           style,
-          channel: activeSource.channelName,
-          title: activeSource.videoTitle,
-          avatar: activeSource.channelAvatar,
-          thumbnail: activeSource.videoThumbnail,
-          platform: activeSource.platform,
-          category: activeSource.name,
+          channel: sourceToUse.name,
+          title: sourceToUse.videoTitle,
+          avatar: sourceToUse.channelAvatar,
+          thumbnail: sourceToUse.videoThumbnail,
+          platform: sourceToUse.platform,
+          category: sourceToUse.channelName,
           displayDuration: isPermanent ? 0 : displayDuration,
+          position,
         },
       });
     };
@@ -287,6 +289,32 @@ function ReactionControl({ config }: Props) {
         
         sendShowEvent();
       }, repeatInterval * 1000);
+    }
+  };
+
+  const handleSourceSelect = (sourceId: string) => {
+    if (sourceId === activeSourceId) return;
+    
+    const newSource = sources.find(s => s.id === sourceId);
+    if (!newSource) return;
+
+    if (isVisible && activeOverlay) {
+      // Animate out current
+      ipcRenderer.invoke('trigger-overlay', {
+        action: 'HIDE',
+        module: 'REACTION',
+        payload: {},
+      });
+
+      // Update UI immediately
+      setActiveSourceId(sourceId);
+
+      // Wait for animation then show new
+      setTimeout(() => {
+        triggerShow(activeOverlay, newSource);
+      }, 600);
+    } else {
+      setActiveSourceId(sourceId);
     }
   };
 
@@ -626,7 +654,7 @@ function ReactionControl({ config }: Props) {
                 sources.map((source) => (
                   <div
                     key={source.id}
-                    onClick={() => setActiveSourceId(source.id)}
+                    onClick={() => handleSourceSelect(source.id)}
                     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                       activeSourceId === source.id
                         ? 'bg-indigo-500/10 border-indigo-500/30'

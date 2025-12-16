@@ -72,43 +72,50 @@
     }
 
     /* ==================== LAYOUT CONTAINERS ==================== */
-    .badge-container {
+    .badge-container, .pip-container {
       position: absolute;
-      bottom: 80px;
-      left: 80px;
       pointer-events: none;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    /* Positioning Classes */
+    .pos-top-left { top: 60px; left: 60px; bottom: auto; right: auto; }
+    .pos-top-right { top: 60px; right: 60px; bottom: auto; left: auto; }
+    .pos-bottom-left { bottom: 60px; left: 60px; top: auto; right: auto; }
+    .pos-bottom-right { bottom: 60px; right: 60px; top: auto; left: auto; }
+
     .banner-container {
       position: absolute;
-      top: 0;
       left: 0;
       right: 0;
       display: flex;
       justify-content: center;
       pointer-events: none;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .pip-container {
-      position: absolute;
-      top: 60px;
-      right: 60px;
-      pointer-events: none;
-    }
+    
+    /* Banner Positioning - Map corners to Top/Bottom */
+    .banner-container.pos-top-left, 
+    .banner-container.pos-top-right { top: 40px; bottom: auto; }
+    .banner-container.pos-bottom-left, 
+    .banner-container.pos-bottom-right { bottom: 40px; top: auto; }
 
     /* ====================================================================
        BADGE LAYOUT - Compact badge in corner
        ==================================================================== */
     
-    /* --- Badge: Clean Style --- */
+    /* --- Badge: Clean Style (Matches Dashboard Preview) --- */
     .badge-clean {
       display: none;
       align-items: center;
-      gap: 16px;
-      padding: 12px 32px 12px 12px;
-      border-radius: 100px;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(24px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      min-width: 320px;
     }
     .badge-clean.visible {
       display: flex;
@@ -122,76 +129,73 @@
       position: relative;
       flex-shrink: 0;
     }
-    .badge-clean .avatar-wrapper::before {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      background: rgba(239, 68, 68, 0.3);
-      animation: pulseRing 2s infinite;
-    }
+    /* Removed pulseRing for cleaner look matching preview */
+    
     .badge-clean .avatar {
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.2);
       position: relative;
       z-index: 1;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
     }
-    .badge-clean .live-dot {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 14px;
-      height: 14px;
-      background: #ef4444;
-      border-radius: 50%;
-      border: 2px solid black;
-      z-index: 2;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
-      animation: livePulse 1.5s infinite;
-    }
+    
     .badge-clean .content {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      flex: 1;
+      min-width: 0;
     }
-    .badge-clean .label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    
+    .badge-clean .header-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    
     .badge-clean .channel-name {
-      font-size: 20px;
+      font-size: 14px;
       font-weight: 700;
       color: white;
-      letter-spacing: -0.3px;
-      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    
     .badge-clean .badge-tag {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      padding: 3px 10px;
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.3);
-      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      width: fit-content;
     }
-    .badge-clean .badge-tag svg {
-      width: 10px;
-      height: 10px;
+    
+    .badge-clean .category {
+      font-size: 12px;
+      color: #9ca3af;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .badge-clean .video-title {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* --- Badge: Broadcast Style --- */
@@ -1162,15 +1166,14 @@
     <div id="badge-clean" class="badge-clean">
       <div class="avatar-wrapper">
         <img class="avatar" data-field="avatar" src="" alt="">
-        <div class="live-dot"></div>
       </div>
       <div class="content">
-        <span class="label">Watching</span>
-        <span class="channel-name" data-field="channel">Channel Name</span>
-        <span class="badge-tag">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path fill-rule="evenodd" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-2 0a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          Reaction
-        </span>
+        <div class="header-row">
+          <span class="channel-name" data-field="channel">Channel Name</span>
+          <span class="badge-tag">REACTION</span>
+        </div>
+        <span class="category" data-field="category">Category</span>
+        <span class="video-title" data-field="title">Video Title</span>
       </div>
     </div>
 
@@ -1460,6 +1463,18 @@
       if (!element) {
         console.warn('Unknown overlay:', key);
         return;
+      }
+
+      // Apply positioning
+      const position = data.position || 'top-right';
+      let container;
+      if (layout === 'badge') container = document.querySelector('.badge-container');
+      else if (layout === 'pip') container = document.querySelector('.pip-container');
+      else if (layout === 'banner') container = document.querySelector('.banner-container');
+
+      if (container) {
+        container.classList.remove('pos-top-left', 'pos-top-right', 'pos-bottom-left', 'pos-bottom-right');
+        container.classList.add(`pos-${position}`);
       }
 
       currentElement = element;

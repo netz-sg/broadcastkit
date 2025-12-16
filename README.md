@@ -142,6 +142,32 @@ Füge diese URLs als **Browser Source** in OBS hinzu:
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screens/startscreen%20(%C3%BCbersicht).png" alt="Dashboard Übersicht" width="100%">
+  <br>
+  <em>Dashboard Übersicht - Alle Module auf einen Blick</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="screens/Strea,%20Scenes%20Screen.png" alt="Stream Scenes Control" width="100%">
+  <br>
+  <em>Stream Scenes Control - Volle Kontrolle über deine Szenen</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="screens/Reactions.png" alt="Reactions Module" width="100%">
+  <br>
+  <em>Reactions Module - Interaktive Video-Reaktionen</em>
+</p>
+
+---
+
 ## ⚙️ Konfiguration
 
 ### OBS WebSocket
