@@ -5,11 +5,12 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  onSaved?: () => void;
 }
 
 type StyleType = 'clean' | 'broadcast' | 'esports';
 
-function LowerThirdControl({ config }: Props) {
+function LowerThirdControl({ config, onSaved }: Props) {
   const [name, setName] = useState(config.overlays.lowerThird.lastUsedName || '');
   const [title, setTitle] = useState(config.overlays.lowerThird.lastUsedTitle || '');
   const [style, setStyle] = useState<StyleType>(config.overlays.lowerThird.style || 'clean');
@@ -26,6 +27,15 @@ function LowerThirdControl({ config }: Props) {
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const nextShowTimeRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+  const pendingSave = useRef(false);
+  
+  // Keep refs updated with latest values for unmount save
+  const latestValues = useRef({ name, title, displayDuration, autoShowEnabled, autoShowInterval, style, avatar });
+  useEffect(() => {
+    latestValues.current = { name, title, displayDuration, autoShowEnabled, autoShowInterval, style, avatar };
+  }, [name, title, displayDuration, autoShowEnabled, autoShowInterval, style, avatar]);
 
   // Auto-Show Timer
   useEffect(() => {
@@ -112,19 +122,70 @@ function LowerThirdControl({ config }: Props) {
     setIsVisible(false);
   };
 
-  const saveSettings = () => {
+  const saveSettings = (values?: typeof latestValues.current) => {
+    const v = values || latestValues.current;
+    console.log('[LowerThird] Saving settings:', v);
+    pendingSave.current = false;
     ipcRenderer.invoke('save-lower-third-settings', {
-      displayDuration,
-      autoShowEnabled,
-      autoShowInterval,
-      style,
-      avatar,
+      lastUsedName: v.name,
+      lastUsedTitle: v.title,
+      displayDuration: v.displayDuration,
+      autoShowEnabled: v.autoShowEnabled,
+      autoShowInterval: v.autoShowInterval,
+      style: v.style,
+      avatar: v.avatar,
+    }).then(() => {
+      console.log('[LowerThird] Settings saved successfully');
+      onSaved?.();
     });
   };
 
+  // Debounced save - wait 500ms after last change before saving
   useEffect(() => {
-    saveSettings();
-  }, [displayDuration, autoShowEnabled, autoShowInterval, style, avatar]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    pendingSave.current = true;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSettings();
+    }, 500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [name, title, displayDuration, autoShowEnabled, autoShowInterval, style, avatar]);
+  
+  // Save immediately on unmount if there are pending changes
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSave.current) {
+        // Use latest values from ref
+        const v = latestValues.current;
+        console.log('[LowerThird] Saving on unmount:', v);
+        ipcRenderer.invoke('save-lower-third-settings', {
+          lastUsedName: v.name,
+          lastUsedTitle: v.title,
+          displayDuration: v.displayDuration,
+          autoShowEnabled: v.autoShowEnabled,
+          autoShowInterval: v.autoShowInterval,
+          style: v.style,
+          avatar: v.avatar,
+        });
+      }
+    };
+  }, []);
 
   // New Pro Style Definitions
   const styles = [

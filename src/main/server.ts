@@ -10,6 +10,7 @@ export class ExpressServer {
   private server: any;
   private io: SocketIOServer;
   private port: number = 3000;
+  private lastStates: Map<string, any> = new Map();
 
   constructor() {
     this.app = express();
@@ -124,7 +125,68 @@ export class ExpressServer {
       // Handle overlay events
       socket.on('trigger-overlay', (data) => {
         console.log('[Server] Triggering overlay:', data);
+        if (data && data.module) {
+          this.lastStates.set(data.module, data);
+        }
         this.io.emit('overlay-event', data);
+      });
+
+      // Handle state request from new clients
+      socket.on('request-state', (moduleName: string) => {
+        console.log(`[Server] Client ${socket.id} requested state for ${moduleName}`);
+        let state = this.lastStates.get(moduleName);
+        
+        if (!state) {
+          const config = configStore.getAll();
+          
+          if (moduleName === 'LOWER_THIRD') {
+            const lt = config.overlays.lowerThird;
+            if (lt && (lt.lastUsedName || lt.lastUsedTitle)) {
+              state = {
+                module: 'LOWER_THIRD',
+                action: 'SHOW',
+                payload: {
+                  name: lt.lastUsedName,
+                  title: lt.lastUsedTitle,
+                  style: lt.style,
+                  avatar: lt.avatar,
+                  duration: lt.displayDuration
+                }
+              };
+            }
+          } else if (moduleName === 'NOW_PLAYING') {
+            const np = config.overlays.nowPlaying;
+            if (np && np.lastUsedTitle) {
+              state = {
+                module: 'NOW_PLAYING',
+                action: 'SHOW',
+                payload: {
+                  title: np.lastUsedTitle,
+                  subtitle: np.lastUsedSubtitle,
+                  cover: np.cover,
+                  style: np.style,
+                  duration: np.displayDuration
+                }
+              };
+            }
+          } else if (moduleName === 'SOCIAL_WIDGET') {
+             const sw = config.overlays.socialWidget;
+             if (sw && sw.links && sw.links.length > 0) {
+                state = {
+                  module: 'SOCIAL_WIDGET',
+                  action: 'SHOW',
+                  payload: {
+                    style: sw.style,
+                    displayDuration: sw.displayDuration
+                  }
+                };
+             }
+          }
+        }
+
+        if (state) {
+          socket.emit('overlay-event', state);
+        }
       });
     });
   }
@@ -143,6 +205,9 @@ export class ExpressServer {
   }
 
   broadcast(event: string, data: any): void {
+    if (event === 'overlay-event' && data && data.module) {
+      this.lastStates.set(data.module, data);
+    }
     this.io.emit(event, data);
   }
 

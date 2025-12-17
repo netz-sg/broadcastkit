@@ -451,7 +451,10 @@
       window.location.reload();
     });
 
-    socket.on('connect', () => console.log('Connected to overlay server'));
+    socket.on('connect', () => {
+      console.log('Connected to overlay server');
+      socket.emit('request-state', 'LOWER_THIRD');
+    });
     socket.on('disconnect', () => console.log('Disconnected from overlay server'));
   </script>
 </body>

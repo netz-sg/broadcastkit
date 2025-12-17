@@ -5,6 +5,7 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  onSaved?: () => void;
 }
 
 interface ReactionSource {
@@ -44,11 +45,12 @@ const platformIcons = {
   ),
 };
 
-function ReactionControl({ config }: Props) {
+function ReactionControl({ config, onSaved }: Props) {
   const reactionConfig = config.overlays?.reaction || {
     sources: [],
     activeSourceId: '',
     style: 'clean',
+    lastUsedLayout: 'badge',
     displayDuration: 0,
     showChannelInfo: true,
     showVideoTitle: true,
@@ -56,6 +58,7 @@ function ReactionControl({ config }: Props) {
     repeatEnabled: false,
     repeatInterval: 60,
     repeatCount: 0,
+    isVisible: false,
   };
 
   const [sources, setSources] = useState<ReactionSource[]>(reactionConfig.sources || []);
@@ -64,8 +67,8 @@ function ReactionControl({ config }: Props) {
   const [position, setPosition] = useState<PositionType>(reactionConfig.position || 'top-right');
   const [showChannelInfo, setShowChannelInfo] = useState(reactionConfig.showChannelInfo !== false);
   const [showVideoTitle, setShowVideoTitle] = useState(reactionConfig.showVideoTitle !== false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [activeOverlay, setActiveOverlay] = useState<OverlayType | null>(null);
+  const [isVisible, setIsVisible] = useState(reactionConfig.isVisible || false);
+  const [activeOverlay, setActiveOverlay] = useState<OverlayType | null>(reactionConfig.lastUsedLayout || null);
   
   // Timer Settings
   const [displayDuration, setDisplayDuration] = useState(reactionConfig.displayDuration || 0);
@@ -97,13 +100,68 @@ function ReactionControl({ config }: Props) {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const editAvatarInputRef = useRef<HTMLInputElement>(null);
   const editThumbnailInputRef = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+  const pendingSave = useRef(false);
+  
+  // Keep refs updated with latest values for unmount save
+  const latestValues = useRef({ sources, activeSourceId, style, position, showChannelInfo, showVideoTitle, displayDuration, repeatEnabled, repeatInterval, repeatCount, isPermanent, activeOverlay, isVisible });
+  useEffect(() => {
+    latestValues.current = { sources, activeSourceId, style, position, showChannelInfo, showVideoTitle, displayDuration, repeatEnabled, repeatInterval, repeatCount, isPermanent, activeOverlay, isVisible };
+  }, [sources, activeSourceId, style, position, showChannelInfo, showVideoTitle, displayDuration, repeatEnabled, repeatInterval, repeatCount, isPermanent, activeOverlay, isVisible]);
 
   const activeSource = sources.find(s => s.id === activeSourceId);
 
-  // Save settings when changed
+  // Debounced save - wait 500ms after last change before saving
   useEffect(() => {
-    saveSettings();
-  }, [style, position, showChannelInfo, showVideoTitle, displayDuration, repeatEnabled, repeatInterval, repeatCount]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    pendingSave.current = true;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSettings();
+    }, 500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [sources, activeSourceId, style, position, showChannelInfo, showVideoTitle, displayDuration, repeatEnabled, repeatInterval, repeatCount, activeOverlay, isVisible]);
+  
+  // Save immediately on unmount if there are pending changes
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSave.current) {
+        const v = latestValues.current;
+        console.log('[Reaction] Saving on unmount:', v);
+        ipcRenderer.invoke('save-reaction-settings', {
+          sources: v.sources,
+          activeSourceId: v.activeSourceId,
+          style: v.style,
+          position: v.position,
+          showChannelInfo: v.showChannelInfo,
+          showVideoTitle: v.showVideoTitle,
+          displayDuration: v.isPermanent ? 0 : v.displayDuration,
+          repeatEnabled: v.repeatEnabled,
+          repeatInterval: v.repeatInterval,
+          repeatCount: v.repeatCount,
+          lastUsedLayout: v.activeOverlay || 'badge',
+          isVisible: v.isVisible,
+        });
+      }
+    };
+  }, []);
 
   // Cleanup repeat timer on unmount
   useEffect(() => {
@@ -115,17 +173,25 @@ function ReactionControl({ config }: Props) {
   }, []);
 
   const saveSettings = () => {
+    const v = latestValues.current;
+    console.log('[Reaction] Saving settings:', v);
+    pendingSave.current = false;
     ipcRenderer.invoke('save-reaction-settings', {
-      sources,
-      activeSourceId,
-      style,
-      position,
-      showChannelInfo,
-      showVideoTitle,
-      displayDuration: isPermanent ? 0 : displayDuration,
-      repeatEnabled,
-      repeatInterval,
-      repeatCount,
+      sources: v.sources,
+      activeSourceId: v.activeSourceId,
+      style: v.style,
+      position: v.position,
+      showChannelInfo: v.showChannelInfo,
+      showVideoTitle: v.showVideoTitle,
+      displayDuration: v.isPermanent ? 0 : v.displayDuration,
+      repeatEnabled: v.repeatEnabled,
+      repeatInterval: v.repeatInterval,
+      repeatCount: v.repeatCount,
+      lastUsedLayout: v.activeOverlay || 'badge',
+      isVisible: v.isVisible,
+    }).then(() => {
+      console.log('[Reaction] Settings saved successfully');
+      onSaved?.();
     });
   };
 
@@ -652,43 +718,148 @@ function ReactionControl({ config }: Props) {
                 </div>
               ) : (
                 sources.map((source) => (
-                  <div
-                    key={source.id}
-                    onClick={() => handleSourceSelect(source.id)}
-                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
-                      activeSourceId === source.id
-                        ? 'bg-indigo-500/10 border-indigo-500/30'
-                        : 'bg-zinc-900/30 border-transparent hover:bg-zinc-900/50'
-                    }`}
-                  >
-                    <div className="relative flex-shrink-0">
-                      {source.channelAvatar ? (
-                        <img src={source.channelAvatar} alt="" className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">
-                          {source.name.charAt(0)}
+                  <div key={source.id}>
+                    {/* Edit Form inline */}
+                    {editingSourceId === source.id ? (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/30 space-y-3"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-indigo-400">Quelle bearbeiten</span>
+                          <button onClick={cancelEditing} className="text-zinc-400 hover:text-white">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
-                      )}
-                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
-                        source.platform === 'youtube' ? 'bg-red-600' :
-                        source.platform === 'twitch' ? 'bg-purple-600' :
-                        source.platform === 'tiktok' ? 'bg-black' : 'bg-black'
-                      }`}>
-                        <span className="scale-75 text-white">{platformIcons[source.platform]}</span>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">Plattform</label>
+                            <select
+                              value={editSource.platform || 'youtube'}
+                              onChange={(e) => setEditSource(prev => ({ ...prev, platform: e.target.value as any }))}
+                              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                            >
+                              <option value="youtube">YouTube</option>
+                              <option value="twitch">Twitch</option>
+                              <option value="tiktok">TikTok</option>
+                              <option value="twitter">X / Twitter</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">Bezeichnung</label>
+                            <input
+                              type="text"
+                              value={editSource.name || ''}
+                              onChange={(e) => setEditSource(prev => ({ ...prev, name: e.target.value }))}
+                              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">Kanal-Name</label>
+                            <input
+                              type="text"
+                              value={editSource.channelName || ''}
+                              onChange={(e) => setEditSource(prev => ({ ...prev, channelName: e.target.value }))}
+                              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-zinc-400 mb-1">Video-Titel</label>
+                            <input
+                              type="text"
+                              value={editSource.videoTitle || ''}
+                              onChange={(e) => setEditSource(prev => ({ ...prev, videoTitle: e.target.value }))}
+                              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => editAvatarInputRef.current?.click()}
+                            className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-zinc-400 text-sm transition-all"
+                          >
+                            <input ref={editAvatarInputRef} type="file" accept="image/*" onChange={handleEditAvatarUpload} className="hidden" />
+                            {editSource.channelAvatar ? <span className="text-green-400">Avatar OK</span> : <span>Avatar ändern</span>}
+                          </button>
+                          <button
+                            onClick={() => editThumbnailInputRef.current?.click()}
+                            className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-zinc-400 text-sm transition-all"
+                          >
+                            <input ref={editThumbnailInputRef} type="file" accept="image/*" onChange={handleEditThumbnailUpload} className="hidden" />
+                            {editSource.videoThumbnail ? <span className="text-green-400">Thumb OK</span> : <span>Thumb ändern</span>}
+                          </button>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button
+                            onClick={cancelEditing}
+                            className="px-3 py-1.5 text-zinc-400 hover:text-white text-sm"
+                          >
+                            Abbrechen
+                          </button>
+                          <button
+                            onClick={saveEditedSource}
+                            disabled={!editSource.name || !editSource.channelName}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+                          >
+                            Speichern
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      /* Normal source item */
+                      <div
+                        onClick={() => handleSourceSelect(source.id)}
+                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
+                          activeSourceId === source.id
+                            ? 'bg-indigo-500/10 border-indigo-500/30'
+                            : 'bg-zinc-900/30 border-transparent hover:bg-zinc-900/50'
+                        }`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          {source.channelAvatar ? (
+                            <img src={source.channelAvatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">
+                              {source.name.charAt(0)}
+                            </div>
+                          )}
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
+                            source.platform === 'youtube' ? 'bg-red-600' :
+                            source.platform === 'twitch' ? 'bg-purple-600' :
+                            source.platform === 'tiktok' ? 'bg-black' : 'bg-black'
+                          }`}>
+                            <span className="scale-75 text-white">{platformIcons[source.platform]}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white text-sm font-medium truncate">{source.name}</div>
+                          <div className="text-zinc-400 text-xs truncate">{source.channelName}</div>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startEditing(source); }}
+                          className="p-1.5 text-zinc-500 hover:text-indigo-400 transition-colors"
+                          title="Bearbeiten"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeSource(source.id); }}
+                          className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+                          title="Löschen"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white text-sm font-medium truncate">{source.name}</div>
-                      <div className="text-zinc-400 text-xs truncate">{source.channelName}</div>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); removeSource(source.id); }}
-                      className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    )}
                   </div>
                 ))
               )}

@@ -91,28 +91,12 @@ const tabs: TabInfo[] = [
 function Dashboard() {
   const [config, setConfig] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [showSaveIndicator, setShowSaveIndicator] = useState(false);
 
-  // Load config initially
   useEffect(() => {
     ipcRenderer.invoke('get-config').then((cfg: any) => {
       setConfig(cfg);
     });
   }, []);
-
-  // Reload config when switching tabs to get latest saved values
-  const handleTabChange = async (tab: TabType) => {
-    // Load fresh config before switching
-    const cfg = await ipcRenderer.invoke('get-config');
-    setConfig(cfg);
-    setActiveTab(tab);
-  };
-
-  // Show save indicator
-  const handleSaved = () => {
-    setShowSaveIndicator(true);
-    setTimeout(() => setShowSaveIndicator(false), 1500);
-  };
 
   if (!config) {
     return (
@@ -125,17 +109,17 @@ function Dashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab config={config} onNavigate={handleTabChange} />;
+        return <OverviewTab config={config} onNavigate={setActiveTab} />;
       case 'lower-third':
-        return <LowerThirdControl config={config} onSaved={handleSaved} />;
+        return <LowerThirdControl config={config} />;
       case 'now-playing':
-        return <NowPlayingControl config={config} onSaved={handleSaved} />;
+        return <NowPlayingControl config={config} />;
       case 'social':
-        return <SocialWidgetControl config={config} onSaved={handleSaved} />;
+        return <SocialWidgetControl config={config} />;
       case 'stream-scenes':
-        return <StreamScenesControl config={config} onSaved={handleSaved} />;
+        return <StreamScenesControl config={config} />;
       case 'reaction':
-        return <ReactionControl config={config} onSaved={handleSaved} />;
+        return <ReactionControl config={config} />;
       default:
         return null;
     }
@@ -143,23 +127,6 @@ function Dashboard() {
 
   return (
     <div className="flex h-full overflow-hidden bg-transparent text-zinc-100 font-sans">
-      {/* Save Indicator */}
-      <AnimatePresence>
-        {showSaveIndicator && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-green-500/20 border border-green-500/30 text-green-400 px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span className="text-sm font-medium">Gespeichert</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Sidebar Navigation */}
       <div className="w-72 flex-shrink-0 flex flex-col border-r border-white/5 bg-[#09090b] relative z-20">
         {/* Sidebar Header */}
@@ -185,7 +152,7 @@ function Dashboard() {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
                     activeTab === tab.id 
                       ? 'bg-indigo-500/10 text-indigo-400 shadow-sm ring-1 ring-indigo-500/20' 

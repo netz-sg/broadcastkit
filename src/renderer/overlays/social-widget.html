@@ -312,6 +312,11 @@
   <script>
     const socket = io();
     
+    socket.on('connect', () => {
+      console.log('Connected to overlay server');
+      socket.emit('request-state', 'SOCIAL_WIDGET');
+    });
+    
     let currentLinks = [];
     let currentStyle = 'clean';
     let displayDuration = 5000;

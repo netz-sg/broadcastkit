@@ -57,9 +57,23 @@ const defaultScenes: Record<string, SceneConfig> = {
   }
 };
 
-const StreamScenesControl: React.FC = () => {
+interface Props {
+  config: any;
+  onSaved?: () => void;
+}
+
+const StreamScenesControl: React.FC<Props> = ({ config, onSaved }) => {
+  // Load saved scenes from config or use defaults
+  const savedScenes = config?.overlays?.streamScenes?.scenes;
+  const initialScenes: Record<string, SceneConfig> = savedScenes ? {
+    starting: { ...defaultScenes.starting, ...savedScenes.starting },
+    brb: { ...defaultScenes.brb, ...savedScenes.brb },
+    ending: { ...defaultScenes.ending, ...savedScenes.ending },
+    technical: { ...defaultScenes.technical, ...savedScenes.technical },
+  } : defaultScenes;
+
   const [selectedScene, setSelectedScene] = useState<string>('starting');
-  const [scenes, setScenes] = useState<Record<string, SceneConfig>>(defaultScenes);
+  const [scenes, setScenes] = useState<Record<string, SceneConfig>>(initialScenes);
   const [activeCountdowns, setActiveCountdowns] = useState<Record<string, number | null>>({
     starting: null,
     brb: null,
@@ -74,19 +88,61 @@ const StreamScenesControl: React.FC = () => {
     ending: null,
     technical: null
   });
-
-  // Load saved settings on mount
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+  const pendingSave = useRef(false);
+  
+  // Keep refs updated with latest values for unmount save
+  const latestScenes = useRef(scenes);
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        // In a real app, we'd load from store here. For now using defaults.
-        // const saved = await window.electron.ipcRenderer.invoke('get-scene-settings');
-        // if (saved) setScenes(saved);
-      } catch (error) {
-        console.error('Failed to load scene settings:', error);
+    latestScenes.current = scenes;
+  }, [scenes]);
+
+  // Debounced save - wait 500ms after last change before saving
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    pendingSave.current = true;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      console.log('[StreamScenes] Saving settings:', latestScenes.current);
+      pendingSave.current = false;
+      const savePromises = Object.entries(latestScenes.current).map(([sceneId, scene]) => 
+        ipcRenderer.invoke('save-stream-scene', sceneId, scene)
+      );
+      Promise.all(savePromises).then(() => {
+        console.log('[StreamScenes] Settings saved successfully');
+        onSaved?.();
+      });
+    }, 500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
     };
-    loadSettings();
+  }, [scenes]);
+  
+  // Save immediately on unmount if there are pending changes
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSave.current) {
+        console.log('[StreamScenes] Saving on unmount:', latestScenes.current);
+        Object.entries(latestScenes.current).forEach(([sceneId, scene]) => {
+          ipcRenderer.invoke('save-stream-scene', sceneId, scene);
+        });
+      }
+    };
   }, []);
 
   const startCountdown = (sceneId: string) => {

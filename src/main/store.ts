@@ -25,7 +25,7 @@ interface NowPlayingConfig {
   lastUsedTitle: string;        // Game/Song title
   lastUsedSubtitle: string;     // Mode/Artist
   cover: string;                // Cover image URL or base64
-  style: 'card' | 'fullwidth';  // Now Playing Style
+  style: 'card' | 'fullwidth' | 'broadcast' | 'esports';  // Now Playing Style
   displayDuration: number;      // Sekunden
   autoShowEnabled: boolean;     // Auto-Anzeige aktiviert?
   autoShowInterval: number;     // Interval in Minuten
@@ -87,6 +87,7 @@ interface ReactionConfig {
   sources: ReactionSource[];
   activeSourceId: string;
   style: 'clean' | 'broadcast' | 'esports';
+  lastUsedLayout: 'badge' | 'banner' | 'pip';  // Last used overlay layout
   displayDuration: number;        // Sekunden (0 = dauerhaft)
   repeatEnabled: boolean;         // Wiederholung aktiviert
   repeatInterval: number;         // Wiederholungsintervall in Sekunden
@@ -94,6 +95,7 @@ interface ReactionConfig {
   showChannelInfo: boolean;
   showVideoTitle: boolean;
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  isVisible: boolean;             // Ob das Overlay gerade sichtbar ist
 }
 
 interface OverlayConfig {
@@ -216,6 +218,7 @@ const defaultConfig: AppConfig = {
       sources: [],
       activeSourceId: '',
       style: 'clean',
+      lastUsedLayout: 'badge',  // Default to badge layout
       displayDuration: 0,       // 0 = dauerhaft bis manuell ausgeblendet
       repeatEnabled: false,     // Wiederholung deaktiviert
       repeatInterval: 60,       // Alle 60 Sekunden wiederholen
@@ -223,6 +226,7 @@ const defaultConfig: AppConfig = {
       showChannelInfo: true,
       showVideoTitle: true,
       position: 'top-right',
+      isVisible: false,         // Overlay nicht sichtbar beim Start
     },
   },
 };

@@ -92,6 +92,9 @@ ipcMain.handle('get-app-version', async () => {
 
 ipcMain.handle('update-obs-config', async (event, config) => {
   try {
+    // Save to store first
+    configStore.setObsConfig(config);
+    
     await obsConnector.disconnect();
     await obsConnector.connect(config);
     return { success: true };

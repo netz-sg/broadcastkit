@@ -1,6 +1,6 @@
 {
     "name": "broadcastkit",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "description": "BroadcastKit - Professionelle Stream Overlays fÃƒÆ’Ã‚Â¼r OBS mit automatischer Spielerkennung",
     "main": "dist/main/index.js",
     "scripts": {
@@ -112,6 +112,7 @@
         "obs-websocket-js": "^5.0.5",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "react-router-dom": "^7.10.1",
         "socket.io": "^4.6.0",
         "socket.io-client": "^4.6.0"
     }

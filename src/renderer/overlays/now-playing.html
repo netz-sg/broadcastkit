@@ -365,6 +365,217 @@
       border-radius: 6px;
       font-family: 'Rajdhani', monospace;
     }
+
+    /* ==================== BROADCAST STYLE CONTAINER ==================== */
+    .broadcast-container {
+      position: absolute;
+      bottom: 80px;
+      left: 80px;
+      pointer-events: none;
+    }
+
+    /* ==================== 3. BROADCAST STYLE (News/Professional) ==================== */
+    .broadcast-style {
+      display: none;
+      flex-direction: column;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+    }
+    .broadcast-style.visible {
+      display: flex;
+      animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .broadcast-style.hiding {
+      animation: slideOut 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .broadcast-top-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .broadcast-tag {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 8px 16px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .broadcast-tag::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) skewX(-12deg); }
+      100% { transform: translateX(200%) skewX(-12deg); }
+    }
+    .broadcast-tag-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    .broadcast-accent {
+      width: 40px;
+      height: 32px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
+    }
+
+    .broadcast-main {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(0,0,0,0.7));
+      padding: 20px 32px 20px 20px;
+      border-left: 3px solid #ef4444;
+      min-width: 400px;
+    }
+    .broadcast-cover {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: #1f2937;
+      flex-shrink: 0;
+    }
+    .broadcast-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .broadcast-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .broadcast-subtitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: #9ca3af;
+    }
+
+    /* ==================== ESPORTS STYLE CONTAINER ==================== */
+    .esports-container {
+      position: absolute;
+      bottom: 80px;
+      left: 80px;
+      pointer-events: none;
+    }
+
+    /* ==================== 4. ESPORTS STYLE (Competitive Gaming) ==================== */
+    .esports-style {
+      display: none;
+      align-items: stretch;
+      filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.6));
+    }
+    .esports-style.visible {
+      display: flex;
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .esports-style.hiding {
+      animation: slideOut 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+
+    .esports-side-bar {
+      width: 6px;
+      background: linear-gradient(180deg, #ef4444, #f97316);
+      transform: skewX(-8deg);
+      margin-right: -3px;
+    }
+    .esports-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, rgba(15,15,15,0.95), rgba(25,25,25,0.95));
+      padding: 18px 32px 18px 22px;
+      transform: skewX(-8deg);
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+      min-width: 380px;
+    }
+    .esports-main::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, #ef4444, #f97316, transparent);
+    }
+    .esports-inner {
+      transform: skewX(8deg);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .esports-cover {
+      width: 56px;
+      height: 56px;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+      object-fit: cover;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      flex-shrink: 0;
+    }
+    .esports-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .esports-tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .esports-tag-dot {
+      width: 6px;
+      height: 6px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    .esports-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.1;
+    }
+    .esports-subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -418,12 +629,54 @@
     </div>
   </div>
 
+  <!-- BROADCAST STYLE CONTAINER -->
+  <div class="broadcast-container">
+    <div id="broadcastStyle" class="broadcast-style">
+      <div class="broadcast-top-bar">
+        <div class="broadcast-tag">
+          <div class="broadcast-tag-dot"></div>
+          Now Playing
+        </div>
+        <div class="broadcast-accent"></div>
+      </div>
+      <div class="broadcast-main">
+        <img id="broadcastCover" class="broadcast-cover" src="https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png" alt="Cover">
+        <div class="broadcast-info">
+          <div id="broadcastTitle" class="broadcast-title">Game Title</div>
+          <div id="broadcastSubtitle" class="broadcast-subtitle">Game Mode</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESPORTS STYLE CONTAINER -->
+  <div class="esports-container">
+    <div id="esportsStyle" class="esports-style font-tech">
+      <div class="esports-side-bar"></div>
+      <div class="esports-main">
+        <div class="esports-inner">
+          <img id="esportsCover" class="esports-cover" src="https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png" alt="Cover">
+          <div class="esports-info">
+            <div class="esports-tag">
+              <div class="esports-tag-dot"></div>
+              Now Playing
+            </div>
+            <div id="esportsTitle" class="esports-title">Game Title</div>
+            <div id="esportsSubtitle" class="esports-subtitle">Game Mode</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io('http://localhost:3000');
     
     const cardStyle = document.getElementById('cardStyle');
     const fullwidthStyle = document.getElementById('fullwidthStyle');
+    const broadcastStyle = document.getElementById('broadcastStyle');
+    const esportsStyle = document.getElementById('esportsStyle');
     
     const cardCover = document.getElementById('cardCover');
     const cardCoverReflect = document.getElementById('cardCoverReflect');
@@ -435,13 +688,21 @@
     const fullwidthTitle = document.getElementById('fullwidthTitle');
     const fullwidthSubtitle = document.getElementById('fullwidthSubtitle');
 
+    const broadcastCover = document.getElementById('broadcastCover');
+    const broadcastTitle = document.getElementById('broadcastTitle');
+    const broadcastSubtitle = document.getElementById('broadcastSubtitle');
+
+    const esportsCover = document.getElementById('esportsCover');
+    const esportsTitle = document.getElementById('esportsTitle');
+    const esportsSubtitle = document.getElementById('esportsSubtitle');
+
     let hideTimeout;
     let currentStyle = null;
     const defaultDuration = 10;
     const defaultCover = 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png';
 
     function hideAllStyles() {
-      [cardStyle, fullwidthStyle].forEach(el => {
+      [cardStyle, fullwidthStyle, broadcastStyle, esportsStyle].forEach(el => {
         el.classList.remove('visible', 'hiding');
       });
     }
@@ -472,6 +733,20 @@
             fullwidthSubtitle.textContent = subtitle || 'Game Mode';
             fullwidthStyle.classList.add('visible');
             break;
+
+          case 'broadcast':
+            broadcastCover.src = coverUrl;
+            broadcastTitle.textContent = title || 'Game Title';
+            broadcastSubtitle.textContent = subtitle || 'Game Mode';
+            broadcastStyle.classList.add('visible');
+            break;
+
+          case 'esports':
+            esportsCover.src = coverUrl;
+            esportsTitle.textContent = title || 'Game Title';
+            esportsSubtitle.textContent = subtitle || 'Game Mode';
+            esportsStyle.classList.add('visible');
+            break;
             
           default:
             cardCover.src = coverUrl;
@@ -492,7 +767,12 @@
       clearTimeout(hideTimeout);
       if (!currentStyle) return;
 
-      const styleMap = { card: cardStyle, fullwidth: fullwidthStyle };
+      const styleMap = { 
+        card: cardStyle, 
+        fullwidth: fullwidthStyle,
+        broadcast: broadcastStyle,
+        esports: esportsStyle
+      };
       const el = styleMap[currentStyle];
       
       if (el) {
@@ -521,7 +801,10 @@
       window.location.reload();
     });
 
-    socket.on('connect', () => console.log('Connected to overlay server'));
+    socket.on('connect', () => {
+      console.log('Connected to overlay server');
+      socket.emit('request-state', 'NOW_PLAYING');
+    });
     socket.on('disconnect', () => console.log('Disconnected from overlay server'));
   </script>
 </body>

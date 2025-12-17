@@ -68,6 +68,12 @@
     @keyframes gradientFlow {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
+    }
+    @keyframes contentSwitch {
+      0% { opacity: 1; transform: translateX(0); }
+      40% { opacity: 0; transform: translateX(10px); }
+      60% { opacity: 0; transform: translateX(-10px); }
+      100% { opacity: 1; transform: translateX(0); }
       100% { background-position: 0% 50%; }
     }
 
@@ -78,7 +84,7 @@
       transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Positioning Classes */
+    /* Positioning Classes - badges/pip fixed to corners */
     .pos-top-left { top: 60px; left: 60px; bottom: auto; right: auto; }
     .pos-top-right { top: 60px; right: 60px; bottom: auto; left: auto; }
     .pos-bottom-left { bottom: 60px; left: 60px; top: auto; right: auto; }
@@ -115,13 +121,24 @@
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(24px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      min-width: 320px;
+      min-width: 380px;
+      width: auto;
+      max-width: 600px;
     }
     .badge-clean.visible {
       display: flex;
-      animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .badge-clean.hiding {
+      animation: slideOutRight 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+    /* Left position overrides */
+    .pos-top-left .badge-clean.visible,
+    .pos-bottom-left .badge-clean.visible {
+      animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pos-top-left .badge-clean.hiding,
+    .pos-bottom-left .badge-clean.hiding {
       animation: slideOutLeft 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
     }
 
@@ -197,18 +214,30 @@
       align-items: center;
       gap: 4px;
     }
-
-    /* --- Badge: Broadcast Style --- */
     .badge-broadcast {
       display: none;
       flex-direction: column;
       filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+      min-width: 380px;
+      width: auto;
+      max-width: 600px;
+    } filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.5));
+      width: 380px;
     }
     .badge-broadcast.visible {
       display: flex;
-      animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .badge-broadcast.hiding {
+      animation: slideOutRight 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+    /* Left position overrides */
+    .pos-top-left .badge-broadcast.visible,
+    .pos-bottom-left .badge-broadcast.visible {
+      animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pos-top-left .badge-broadcast.hiding,
+    .pos-bottom-left .badge-broadcast.hiding {
       animation: slideOutLeft 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
     }
 
@@ -287,18 +316,30 @@
       font-weight: 500;
       color: #9ca3af;
     }
-
-    /* --- Badge: Esports Style --- */
     .badge-esports {
       display: none;
       align-items: stretch;
       filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.6));
+      min-width: 380px;
+      width: auto;
+      max-width: 600px;
+    } filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.6));
+      width: 380px;
     }
     .badge-esports.visible {
       display: flex;
-      animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .badge-esports.hiding {
+      animation: slideOutRight 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+    /* Left position overrides */
+    .pos-top-left .badge-esports.visible,
+    .pos-bottom-left .badge-esports.visible {
+      animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pos-top-left .badge-esports.hiding,
+    .pos-bottom-left .badge-esports.hiding {
       animation: slideOutLeft 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
     }
 
@@ -1390,6 +1431,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+
+    socket.on('connect', () => {
+      console.log('Connected to overlay server');
+      socket.emit('request-state', 'REACTION');
+    });
     let currentElement = null;
     let hideTimeout = null;
 

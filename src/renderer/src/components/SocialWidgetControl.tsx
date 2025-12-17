@@ -5,6 +5,7 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  onSaved?: () => void;
 }
 
 interface SocialLink {
@@ -26,7 +27,7 @@ const platformConfig = {
   twitch: { icon: 'twitch', color: 'text-purple-400', bgColor: 'bg-purple-600', label: 'Twitch' },
 };
 
-function SocialWidgetControl({ config }: Props) {
+function SocialWidgetControl({ config, onSaved }: Props) {
   const socialConfig = config.overlays.socialWidget || {};
   
   const [links, setLinks] = useState<SocialLink[]>(socialConfig.links || [
@@ -44,6 +45,15 @@ function SocialWidgetControl({ config }: Props) {
   const [previewIndex, setPreviewIndex] = useState(0);
   
   const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+  const pendingSave = useRef(false);
+  
+  // Keep refs updated with latest values for unmount save
+  const latestValues = useRef({ links, style, displayDuration, isRunning });
+  useEffect(() => {
+    latestValues.current = { links, style, displayDuration, isRunning };
+  }, [links, style, displayDuration, isRunning]);
 
   const enabledLinks = links.filter(l => l.enabled);
 
@@ -108,17 +118,62 @@ function SocialWidgetControl({ config }: Props) {
   };
 
   const saveSettings = () => {
+    const v = latestValues.current;
+    console.log('[SocialWidget] Saving settings:', v);
+    pendingSave.current = false;
     ipcRenderer.invoke('save-social-widget-settings', {
-      links,
-      style,
-      displayDuration,
-      isRunning,
+      links: v.links,
+      style: v.style,
+      displayDuration: v.displayDuration,
+      isRunning: v.isRunning,
+    }).then(() => {
+      console.log('[SocialWidget] Settings saved successfully');
+      onSaved?.();
     });
   };
 
+  // Debounced save - wait 500ms after last change before saving
   useEffect(() => {
-    saveSettings();
-  }, [links, style, displayDuration]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    pendingSave.current = true;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSettings();
+    }, 500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [links, style, displayDuration, isRunning]);
+  
+  // Save immediately on unmount if there are pending changes
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSave.current) {
+        const v = latestValues.current;
+        console.log('[SocialWidget] Saving on unmount:', v);
+        ipcRenderer.invoke('save-social-widget-settings', {
+          links: v.links,
+          style: v.style,
+          displayDuration: v.displayDuration,
+          isRunning: v.isRunning,
+        });
+      }
+    };
+  }, []);
 
   // Update overlay when running and settings change
   useEffect(() => {

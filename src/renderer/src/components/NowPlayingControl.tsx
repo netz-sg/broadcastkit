@@ -5,9 +5,10 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {
   config: any;
+  onSaved?: () => void;
 }
 
-type StyleType = 'card' | 'fullwidth';
+type StyleType = 'card' | 'fullwidth' | 'broadcast' | 'esports';
 
 interface DetectedGame {
   processName: string;
@@ -22,7 +23,7 @@ interface RawgGameInfo {
   released?: string;
 }
 
-function NowPlayingControl({ config }: Props) {
+function NowPlayingControl({ config, onSaved }: Props) {
   const nowPlayingConfig = config.overlays.nowPlaying || {};
   const hasRawgKey = !!config.rawg?.apiKey;
   
@@ -50,6 +51,15 @@ function NowPlayingControl({ config }: Props) {
   const autoDetectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const nextShowTimeRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
+  const pendingSave = useRef(false);
+  
+  // Keep refs updated with latest values for unmount save
+  const latestValues = useRef({ title, subtitle, displayDuration, autoShowEnabled, autoShowInterval, autoDetectEnabled, autoDetectInterval, style, cover });
+  useEffect(() => {
+    latestValues.current = { title, subtitle, displayDuration, autoShowEnabled, autoShowInterval, autoDetectEnabled, autoDetectInterval, style, cover };
+  }, [title, subtitle, displayDuration, autoShowEnabled, autoShowInterval, autoDetectEnabled, autoDetectInterval, style, cover]);
 
   // Auto-Show Timer
   useEffect(() => {
@@ -243,22 +253,72 @@ function NowPlayingControl({ config }: Props) {
   };
 
   const saveSettings = () => {
+    const v = latestValues.current;
+    console.log('[NowPlaying] Saving settings:', v);
+    pendingSave.current = false;
     ipcRenderer.invoke('save-now-playing-settings', {
-      displayDuration,
-      autoShowEnabled,
-      autoShowInterval,
-      autoDetectEnabled,
-      autoDetectInterval,
-      style,
-      cover,
-      lastUsedTitle: title,
-      lastUsedSubtitle: subtitle,
+      displayDuration: v.displayDuration,
+      autoShowEnabled: v.autoShowEnabled,
+      autoShowInterval: v.autoShowInterval,
+      autoDetectEnabled: v.autoDetectEnabled,
+      autoDetectInterval: v.autoDetectInterval,
+      style: v.style,
+      cover: v.cover,
+      lastUsedTitle: v.title,
+      lastUsedSubtitle: v.subtitle,
+    }).then(() => {
+      console.log('[NowPlaying] Settings saved successfully');
+      onSaved?.();
     });
   };
 
+  // Debounced save - wait 500ms after last change before saving
   useEffect(() => {
-    saveSettings();
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    pendingSave.current = true;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSettings();
+    }, 500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [displayDuration, autoShowEnabled, autoShowInterval, autoDetectEnabled, autoDetectInterval, style, cover, title, subtitle]);
+  
+  // Save immediately on unmount if there are pending changes
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (pendingSave.current) {
+        const v = latestValues.current;
+        console.log('[NowPlaying] Saving on unmount:', v);
+        ipcRenderer.invoke('save-now-playing-settings', {
+          displayDuration: v.displayDuration,
+          autoShowEnabled: v.autoShowEnabled,
+          autoShowInterval: v.autoShowInterval,
+          autoDetectEnabled: v.autoDetectEnabled,
+          autoDetectInterval: v.autoDetectInterval,
+          style: v.style,
+          cover: v.cover,
+          lastUsedTitle: v.title,
+          lastUsedSubtitle: v.subtitle,
+        });
+      }
+    };
+  }, []);
 
   const styles = [
     {
@@ -282,6 +342,30 @@ function NowPlayingControl({ config }: Props) {
       icon: (
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'broadcast' as StyleType,
+      name: 'Broadcast',
+      description: 'Professional News Style',
+      color: 'from-red-500 to-orange-500',
+      borderColor: 'border-red-500',
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'esports' as StyleType,
+      name: 'Esports',
+      description: 'Competitive Gaming',
+      color: 'from-orange-500 to-red-600',
+      borderColor: 'border-orange-500',
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
     },
@@ -342,6 +426,60 @@ function NowPlayingControl({ config }: Props) {
     );
   };
 
+  // Preview - Broadcast Style
+  const renderBroadcastPreview = () => {
+    const previewCover = cover || 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png';
+    return (
+      <div className="scale-[0.55] origin-left -ml-2">
+        <div className="flex flex-col">
+          {/* Top Bar */}
+          <div className="flex items-center gap-0.5">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span className="text-white text-xs font-bold uppercase tracking-wider">Now Playing</span>
+            </div>
+            <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-transparent" style={{clipPath: 'polygon(0 0, 100% 0, 70% 100%, 0 100%)'}}></div>
+          </div>
+          {/* Main Content */}
+          <div className="flex items-center gap-4 bg-gradient-to-r from-black/90 to-black/70 px-4 py-3 border-l-[3px] border-red-500 min-w-[350px]">
+            <img src={previewCover} alt="Cover" className="w-12 h-12 rounded-lg object-cover border border-white/20" />
+            <div className="flex-1">
+              <h1 className="text-white text-lg font-bold leading-tight">{title || 'Game Title'}</h1>
+              <span className="text-zinc-400 text-xs">{subtitle || 'Mode'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Preview - Esports Style
+  const renderEsportsPreview = () => {
+    const previewCover = cover || 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7x.png';
+    return (
+      <div className="scale-[0.55] origin-left -ml-2">
+        <div className="flex items-stretch">
+          {/* Side Accent */}
+          <div className="w-1.5 bg-gradient-to-b from-red-500 to-orange-500" style={{transform: 'skewX(-8deg)', marginRight: '-2px'}}></div>
+          {/* Main Content */}
+          <div className="flex items-center gap-3 bg-gradient-to-r from-zinc-900/95 to-zinc-900/90 px-4 py-3 border-t border-white/5 min-w-[300px]" style={{transform: 'skewX(-8deg)'}}>
+            <div style={{transform: 'skewX(8deg)'}} className="flex items-center gap-3">
+              <img src={previewCover} alt="Cover" className="w-11 h-11 object-cover" style={{clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)'}} />
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-red-500 text-[9px] font-bold uppercase tracking-widest">Playing</span>
+                </div>
+                <h1 className="text-white text-base font-bold uppercase tracking-wide" style={{fontFamily: 'Rajdhani, sans-serif'}}>{title || 'Game Title'}</h1>
+                <span className="text-zinc-400 text-[10px] uppercase tracking-wider">{subtitle || 'Mode'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 w-full max-w-4xl mx-auto">
       {/* Browser Source URL */}
@@ -385,7 +523,10 @@ function NowPlayingControl({ config }: Props) {
         <div className="bg-black/40 rounded-xl p-12 flex items-center justify-center min-h-[200px] relative overflow-hidden border border-white/5 shadow-inner">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20"></div>
-          {style === 'card' ? renderCardPreview() : renderFullwidthPreview()}
+          {style === 'card' && renderCardPreview()}
+          {style === 'fullwidth' && renderFullwidthPreview()}
+          {style === 'broadcast' && renderBroadcastPreview()}
+          {style === 'esports' && renderEsportsPreview()}
         </div>
       </div>
 
